@@ -48,6 +48,9 @@ Judges play it through a web terminal; purists use real `telnet`.
    interface; the deterministic offline narrator SHALL need no API key and SHALL
    be the only narrator used in tests, CI and offline demos.
 7. THE tests SHALL make no network calls; the Gemini provider is tested with a fake client.
+8. THE Gemini model id SHALL always come from the env var `GEMINI_MODEL`, never from code.
+9. THE system SHALL offer `python -m telnet_tales.narrator.list_models`, which prints the model ids available to the configured key.
+10. IF the model returns 404 or any error THEN the turn SHALL use the offline narrator; the fix is to change `GEMINI_MODEL`, not code.
 
 ## R5 - Free-text commands as typed actions
 1. WHEN the player types free text THE narrator SHALL return a `ProposedAction`
@@ -102,6 +105,9 @@ Judges play it through a web terminal; purists use real `telnet`.
 2. IF a save file is corrupt or invalid THEN the system SHALL refuse it and
    start a new game without crashing.
 3. Saves SHALL contain no secrets.
+4. THE session SHALL persist saves only through a `SaveStore` Protocol with `load(player_id)`, `save(player_id, save_game)` and `delete(player_id)`.
+5. THE default store SHALL be `LocalFileSaveStore` (local disk). WHERE env `GCS_SAVE_BUCKET` is set THE system SHALL use `GcsSaveStore` instead.
+6. WHERE no bucket is configured on Cloud Run THE docs SHALL state that resume works only while the instance is warm.
 
 ## R11 - Internationalization
 1. THE UI strings SHALL come from a catalog with `en` and `es-ES`.

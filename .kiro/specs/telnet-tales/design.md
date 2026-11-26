@@ -21,7 +21,7 @@ flowchart LR
   Stories[stories loader] --> Engine
   Engine -->|events| Narrator
   Render --> Throttle[baud throttle] --> Server
-  Server --> Saves[(saves JSON)]
+  Server --> Saves[(SaveStore: local file or GCS bucket)]
 ```
 
 ## Packages and why they are separate
@@ -44,6 +44,7 @@ baud pacing are testable pure functions that both Telnet and web share.
 - `Encounter(id, name, hit_points, attack_bonus, damage, flavor_hint)`.
 - `ProposedAction(action_type: Literal[...], target: str | None)` with `extra="forbid"`.
 - `ActionResult(ok, rejection: Rejection | None, events: tuple[GameEvent, ...])`.
+- `SaveGame(version, state: GameState)`: validated snapshot that a `SaveStore` persists as JSON.
 - `NarrationContext(node_title, node_text, visible_exits, visible_items, public_stats, recent_events)`.
 
 ## Key interfaces
@@ -57,7 +58,21 @@ def apply_action(
     state: GameState, action: ProposedAction, story: Story
 ) -> tuple[GameState, ActionResult]: ...
 ```
+```python
+class SaveStore(Protocol):
+    def load(self, player_id: str) -> SaveGame | None: ...
+    def save(self, player_id: str, save_game: SaveGame) -> None: ...
+    def delete(self, player_id: str) -> None: ...
+```
 `apply_action` returns a new state (immutability makes property tests easy).
+
+## Save store
+Session code talks only to the `SaveStore` Protocol (three methods, above).
+`LocalFileSaveStore` (default) writes one JSON per handle on local disk; it is the
+only store in tests and local play. `GcsSaveStore` is optional and chosen only when
+`GCS_SAVE_BUCKET` is set; it imports `google-cloud-storage` lazily and the package
+enters `pyproject` only in task 14.11. `load` returns `None` when there is no save
+or the save is corrupt (the corrupt file is kept as `.bad`). See ADR 0009.
 
 ## Story files and the graph validator
 Story vocabulary is the same everywhere (design, requirements, YAML, validator):
@@ -101,8 +116,12 @@ key: it is the only narrator in tests, CI and offline demos (R4.5, R4.6).
 `GeminiProvider` uses the `google-genai` SDK (named here; added to `pyproject`
 only by task 13.1). The key comes from `GEMINI_API_KEY`; Vertex AI is optional with
 the same SDK. Tests inject a fake client and make no network calls (R4.7).
-Model id and SDK usage were checked on 2026-11-26: see ADR 0006 (default
-`gemini-3.5-flash-lite`; `gemini-2.5-flash` is deprecated).
+The model id is always read from the env var `GEMINI_MODEL` and never written in
+code, so Cloud Run config can change it without a redeploy. The default in
+`.env.example` is only a starting value. The exact available id is **not** verified
+until task 13.1 lists models with the real key (`client.models.list()`, shown by
+`python -m telnet_tales.narrator.list_models`). A 404 on the model means change
+`GEMINI_MODEL`, not code; the turn then uses the offline narrator. See ADR 0006.
 `LLMBudgetGuard` wraps any provider: per-session cap (30) and daily cap (500).
 A cap, a missing key, a timeout or an invalid reply sends that turn to the
 offline narrator, with no error shown (R13.4, R13.5).
@@ -119,6 +138,10 @@ flowchart TD
   G -->|no or error| OF[offline narrator]
   GCP[GCP budget alert] -.->|email| Owner
 ```
+- **Persistence:** the container disk is ephemeral and the instance scales to zero
+  after about 15 minutes idle. Without `GCS_SAVE_BUCKET`, Carrier Drop resume works
+  only while the instance is warm; a judge returning next day starts again. With the
+  bucket, saves survive. See ADR 0009.
 - **Container:** one `Dockerfile`, non-root, listens on `$PORT` (web only). No
   secrets in the image; user, password and key come from env or Secret Manager.
 - **Cloud Run:** scale to zero (cost 0 when idle), `max-instances 1` (one process,
@@ -138,7 +161,7 @@ flowchart TD
 ## Error handling
 - LLM: timeout, HTTP error, JSON error or schema error -> offline narrator + counter in logs.
 - Story file errors: aggregated list, startup refused.
-- Save errors: corrupt file renamed `.bad`, new game started.
+- Save errors: corrupt file renamed `.bad`, new game started. A GCS error on `load` or `save` is logged and the game goes on in memory.
 - Network: client disconnect = same path as carrier drop without the message.
 
 ## Correctness properties (for hypothesis)
@@ -152,17 +175,19 @@ flowchart TD
 - **P8 Narrator isolation:** running any narrator (fuzzed outputs) never changes `GameState`.
 - **P9 Width:** for any text, theme and charset, every rendered line has visible width <= 80.
 - **P10 Throttle:** total simulated delay for N bytes equals `N * 10 / baud` within rounding; baud 0 gives 0.
-- **P11 Save round trip:** `load(save(state)) == state`.
+- **P11 Save round trip:** `load(save(state)) == state` (JSON serialization of any valid `GameState`).
 - **P12 Carrier drop resume:** after drop + save + load, the next round equals the round that would have followed with no drop.
 - **P13 i18n parity:** `en` and `es-ES` catalogs have equal key sets.
 - **P14 Transport parity:** for any seed and command script, the Telnet adapter and the web adapter emit identical game bytes (golden file for one fixed script too).
 - **P15 Budget fallback:** for any call sequence, calls to the provider never exceed the session or daily cap; beyond it (or with no key) the offline narrator answers.
 - **P16 Login gate:** only the exact credentials pass; after N failures from one address the next attempt is refused until the backoff window ends.
 
+- **P17 SaveStore contract:** for any valid `GameState` and player id, `load` after `save` returns an equal `SaveGame`; `load` of an unknown id is `None`; `delete` is idempotent (twice equals once) and a later `load` is `None`. Holds for `LocalFileSaveStore` (`tmp_path`) and for `GcsSaveStore` with a fake client.
+
 ## Testing strategy
-Unit tests with concrete cases, hypothesis for P1-P16, loopback integration
+Unit tests with concrete cases, hypothesis for P1-P17, loopback integration
 tests for Telnet and WebSocket with the offline narrator, fake clock for baud
 and timeouts, fake provider and fake `google-genai` client for LLM failures, no network.
 
 ## Decisions
-See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 offline narrator, 0006 Gemini provider, 0007 public demo on Cloud Run, 0008 two transports one pipeline).
+See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 offline narrator, 0006 Gemini provider, 0007 public demo on Cloud Run, 0008 two transports one pipeline, 0009 save store).

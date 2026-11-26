@@ -19,7 +19,7 @@ state, and the same handle resumes the same round. Telnet and a web terminal sho
 the same bytes.
 
 ## How we built it
-- Spec-driven: EARS requirements, a design with 16 correctness properties, and
+- Spec-driven: EARS requirements, a design with 17 correctness properties, and
   ordered tasks ([`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/)).
 - Golden rule: the LLM never mutates state ([ADR 0001](docs/adr/0001-llm-nunca-modifica-el-estado.md)).
   Model output is a `ProposedAction` that the engine validates or rejects.
@@ -35,8 +35,8 @@ the same bytes.
 Expected, not yet met: keeping an LLM useful while it has no power over state;
 80 columns with ANSI colors; making a random carrier drop testable. Real failures
 will be written in the Log, with the property-test counterexample.
-Already hit: the first Gemini model id in our notes (`gemini-2.5-flash`) was unverified
-and is deprecated; see the 2026-11-26 entry.
+Already hit: Gemini model ids from our notes conflict and are unverified; the id now
+comes only from `GEMINI_MODEL`.
 
 ## Accomplishments that we're proud of
 So far, only the foundation: steering, spec, hooks that run real scripts with tests,
@@ -59,16 +59,43 @@ Plan and dates: [`tasks.md`](.kiro/specs/telnet-tales/tasks.md).
 | Steering | always-on product, tech, structure, golden rule, code style, retro terminal, testing, git, devlog; `fileMatch` for `engine/**` |
 | Hooks | `run-tests-on-save` (ruff fix + pytest), `validate-story-graph`, format and file length, no nested loops, engine test reminder, `.kiro` guard, task gate (`make check`), `devlog-reminder` |
 | Strategy | vertical slice first (engine, offline narrator, renderer, Telnet), LLM after |
-| Property tests | P1-P16 in design.md; every engine change needs a hypothesis test |
+| Property tests | P1-P17 in design.md; every engine change needs a hypothesis test |
+| Kiro Crew | The user works with Mate (a Kiro Crew bot) and its workers. Their key requests, decisions and corrections are logged as `[crew]` entries in the Log. |
+
+### Collaboration log
+Convention: entries tagged `[crew]` record what the user asked or decided, what the
+crew bot and workers did, corrections the user made, and what changed in the project.
+Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog.md).
 
 ## Log
 Newest first.
 
+### 2026-11-26 - [crew] User pushes SaveStore and GEMINI_MODEL
+**What happened:** the user asked for two spec changes and for crew work to be logged here.
+(1) The model id is read only from `GEMINI_MODEL`, and must be checked with the real key
+(`client.models.list()`, `list_models` command); an earlier worker had called
+`gemini-3.5-flash-lite` current and `gemini-2.5-flash` deprecated, while the user believes
+`gemini-2.5-flash-lite` is the standard light id. Neither is verified, so ADR 0006 now says so.
+(2) Saves go through a `SaveStore` Protocol with a local store and an optional GCS store
+([ADR 0009](docs/adr/0009-save-store.md)), because Cloud Run disk is ephemeral. A Kiro
+Crew worker made the edits (R4.8-R4.10, R10.4-R10.6, P17, tasks 11.1, 13.1, 14.11, 14.12).
+**Why it matters:** a judge returning the next day would lose a carrier-drop save without a bucket.
+**What we learned:** a model id from any source, even a worker, is unverified until the key says so.
+
+### 2026-11-26 - [crew] Earlier decisions by the user
+**What happened:** reconstructed from the repo history, not from chat logs. The user defined
+the architecture and style rules (golden rule, 200-line files, no nested loops, Spanish
+comments), chose the Resurrection category, picked Gemini, a web demo with a login and
+Cloud Run, and asked for the `run-tests-on-save` and `validate-story-graph` hooks. A crew
+worker wrote the files; the user kept the decisions.
+**Why it matters:** shows which choices were human and which were drafted by the agent.
+**What we learned:** the user decides, the crew drafts and checks.
+
 ### 2026-11-26 - Spec aligned: Cloud Run, shared pipeline, Gemini narrator
 **What happened:** design, requirements and tasks now cover Cloud Run deployment with a
 BBS login (constant-time check, backoff), call caps with offline fallback, and one
-render pipeline under both transports (new properties P14-P16). Checked the Gemini
-docs: `gemini-2.5-flash` is deprecated, default is now `gemini-3.5-flash-lite`.
+render pipeline under both transports (new properties P14-P16). A docs check
+claimed `gemini-2.5-flash` is deprecated; that is unconfirmed (see the `[crew]` entry above).
 **Why it matters:** strangers cannot spend the credit, and web and Telnet cannot drift apart.
 **What we learned:** verify model ids against the docs on the day you pick them.
 

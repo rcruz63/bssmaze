@@ -24,7 +24,7 @@ state is saved; call back and the fight resumes.
 ## How Kiro was used
 | Kiro feature | What we did | Where |
 |---|---|---|
-| **Specs** | EARS requirements, design with 16 correctness properties for property tests, ordered tasks with day markers | [`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/) |
+| **Specs** | EARS requirements, design with 17 correctness properties for property tests, ordered tasks with day markers | [`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/) |
 | **Steering** | Always-on product/tech/structure, architecture golden rule, code style, retro terminal rules, testing, git; `fileMatch` for `engine/**`; manual submission checklist | [`.kiro/steering/`](.kiro/steering/) |
 | **Hooks** | `run-tests-on-save` (ruff fix + pytest), format + file-length, no-nested-loops, `validate-story-graph`, engine test reminder, task gate (`make check`), devlog reminder, `.kiro`-not-ignored guard | [`.kiro/hooks/`](.kiro/hooks/) |
 | **Devlog** | `DEVLOG.md` is the build diary; steering rule `devlog.md` and hook `devlog-reminder` make the agent log each milestone and each property-test failure | [`DEVLOG.md`](DEVLOG.md) |
@@ -60,6 +60,11 @@ Default LLM: Gemini (optional Vertex AI), with call caps and an offline fallback
 The public demo is the web terminal only, behind a login (credentials in the
 Devpost testing instructions), on Google Cloud Run. Real Telnet runs locally and
 in the video. AWS is the documented alternative. See ADRs 0006 and 0007.
+The model id is read only from `GEMINI_MODEL`; list the ids your key can use with
+`uv run python -m telnet_tales.narrator.list_models`.
+Saves: local files by default. On Cloud Run the disk is ephemeral and the instance
+scales to zero after about 15 minutes idle, so without `GCS_SAVE_BUCKET` a carrier-drop
+resume works only while the instance is warm. See ADR 0009.
 
 ## Rules in one glance
 - The LLM never mutates state; every action is validated by the engine.

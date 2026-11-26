@@ -79,7 +79,7 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] DEVLOG entry added
   - Verify: `make check`
 - [ ] 11. Save and resume
-  - [ ] 11.1 `server/saves.py`: JSON per handle, validation, `.bad` quarantine (R10) - P11
+  - [ ] 11.1 `server/saves.py`: `SaveGame`, `SaveStore` Protocol (load, save, delete) and `LocalFileSaveStore`: JSON per handle, validation, `.bad` quarantine (R10.1-R10.5) - P11, P17
   - [ ] DEVLOG entry added
   - Verify: `make check`
 - [ ] 12. Carrier drop
@@ -88,7 +88,9 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] DEVLOG entry added
   - Verify: `make check`; forced-drop integration test
 - [ ] 13. LLM narrator
-  - [ ] 13.1 `narrator/gemini.py`: `uv add google-genai` (first and only place it enters `pyproject`), model from env (default per ADR 0006), timeout, `GEMINI_API_KEY`; optional Vertex AI; re-check SDK call against docs (R4.3, R4.6) - ADR 0006
+  - [ ] 13.1 `narrator/gemini.py`: `uv add google-genai` (first and only place it enters `pyproject`), model only from env `GEMINI_MODEL` (default per ADR 0006, not verified), timeout, `GEMINI_API_KEY`; optional Vertex AI; re-check SDK call against docs (R4.3, R4.6, R4.8, R4.10) - ADR 0006
+    - Verify the exact model id with the real key (`client.models.list()`) before relying on the default; a 404 means change `GEMINI_MODEL`, not code
+    - `narrator/list_models.py`: `python -m telnet_tales.narrator.list_models` prints available ids (R4.9); fake client in tests, no network
   - [ ] 13.2 `narrator/prompts.py`: bounded context, delimited player text (R5.4)
   - [ ] 13.3 `narrator/guard.py`: JSON parse, schema, fallback to offline (R4.3, R5.5) - P8
   - [ ] 13.4 Fake-provider and fake `google-genai` client tests: timeout, garbage, injection strings, no key; no network (R4.6, R4.7)
@@ -107,6 +109,8 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] 14.5 `Dockerfile` (web only, listens on `$PORT`, non-root, no secrets in the image) (R13.8)
   - [ ] 14.6 Deploy to Google Cloud Run: max-instances 1, min 0, WebSocket, secrets via env/Secret Manager, public URL (R13.8) - ADR 0007
   - [ ] 14.7 GCP budget alert; check the daily cap works with a forced fallback
+  - [ ] 14.11 `server/gcs_saves.py`: `GcsSaveStore`, chosen only when `GCS_SAVE_BUCKET` is set, lazy import, `uv add google-cloud-storage` here only; fake client tests (R10.5) - P17
+  - [ ] 14.12 Create the bucket and grant the Cloud Run service account access; note in README and demo notes that without it resume works only while the instance is warm (R10.6) - ADR 0009
   - [ ] 14.8 Credentials into the Devpost testing-instructions field (not in the repo)
   - [ ] DEVLOG entry added
   - Verify: `make check`; open the URL in a browser
