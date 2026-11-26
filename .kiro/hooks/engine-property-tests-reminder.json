@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Engine change needs property tests",
+      "description": "Reminds the agent that engine/ changes require hypothesis + pytest tests.",
+      "trigger": "PostFileSave",
+      "matcher": "src/telnet_tales/engine/.*\\.py$",
+      "action": {
+        "type": "agent",
+        "prompt": "You changed a file in engine/. Per .kiro/steering/testing.md, every engine change needs BOTH a hypothesis property test and a pytest unit test under tests/engine/. If they are missing or do not cover the change, add them now, citing the property id (P1, P2...) from the spec design.md. Keep engine/ pure (no I/O, no LLM, no clock)."
+      }
+    }
+  ]
+}

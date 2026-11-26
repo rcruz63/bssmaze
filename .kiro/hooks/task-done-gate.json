@@ -1,0 +1,24 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Task gate: make check must pass",
+      "description": "Runs after a spec task. Kiro has no hook that blocks a checkbox, so a non-zero exit sends the failures to the agent, which must reopen the task. Closest supported trigger to 'cannot be marked done'.",
+      "trigger": "PostTaskExecution",
+      "action": {
+        "type": "command",
+        "command": "make check"
+      },
+      "timeout": 300
+    },
+    {
+      "name": "Task gate: reopen on failure",
+      "description": "Agent-side half of the gate: states the rule before the task begins.",
+      "trigger": "PreTaskExecution",
+      "action": {
+        "type": "agent",
+        "prompt": "Rule from .kiro/steering/testing.md: this task may only be marked done when `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy` and `make scripts` all pass. If any fail after your work, leave the checkbox unticked and fix or report the failure."
+      }
+    }
+  ]
+}
