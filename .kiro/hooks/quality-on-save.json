@@ -1,0 +1,27 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Format check + file length on save",
+      "description": "After a Python file is saved: ruff format check and the 200-line file limit. Lint runs in run-tests-on-save.",
+      "trigger": "PostFileSave",
+      "matcher": "\\.py$",
+      "action": {
+        "type": "command",
+        "command": "uv run ruff format --check . && uv run python scripts/check_file_length.py"
+      },
+      "timeout": 60
+    },
+    {
+      "name": "No nested loops on save",
+      "description": "After a Python file is saved: rejects for-in-for, while-in-for and multi-for comprehensions.",
+      "trigger": "PostFileSave",
+      "matcher": "\\.py$",
+      "action": {
+        "type": "command",
+        "command": "uv run python scripts/check_nested_loops.py src scripts"
+      },
+      "timeout": 60
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": ".kiro must never be gitignored",
+      "description": "Hackathon rule: .kiro/ must be committed. Fails if git ignores it.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|/)\\.gitignore$",
+      "action": {
+        "type": "command",
+        "command": "uv run python scripts/check_gitignore_kiro.py"
+      },
+      "timeout": 30
+    },
+    {
+      "name": ".kiro ignore check at session start",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "uv run python scripts/check_gitignore_kiro.py"
+      },
+      "timeout": 30
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "validate-story-graph",
+      "description": "After a story file under stories/ is saved: unknown exit targets, dead ends without is_ending, lines over 80 columns, unreachable nodes.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|/)stories/.*\\.(ya?ml|json)$",
+      "action": {
+        "type": "command",
+        "command": "uv run python scripts/validate_story_graph.py"
+      },
+      "timeout": 60
+    }
+  ]
+}
