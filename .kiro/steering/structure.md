@@ -15,6 +15,7 @@ stories/     story data files (YAML). Content, not code.
 tests/       mirrors src/ one to one (tests/engine/test_dice.py <-> engine/dice.py).
 scripts/     repo-rule checkers used by hooks and `make check`
              (`validate_story_graph.py` + `story_validation/` for `stories/`).
+DEVLOG.md    judges' build diary (English); updated per `.kiro/steering/devlog.md`.
 docs/        Spanish documentation and ADRs (docs/adr/).
 .kiro/       steering, specs, hooks. Always committed.
 ```

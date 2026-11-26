@@ -15,8 +15,8 @@ flowchart LR
   Session --> Render[render]
   Narrator -->|ProposedAction| Engine
   Narrator --> Provider{{LLMProvider}}
-  Provider --> Offline[OfflineNarrator]
-  Provider --> Gemini[GeminiProvider]
+  Provider --> Offline[OfflineNarrator, no key]
+  Provider --> Gemini[GeminiProvider: google-genai]
   Gemini -.->|budget caps| Guard[LLM budget guard]
   Stories[stories loader] --> Engine
   Engine -->|events| Narrator
@@ -71,18 +71,69 @@ unknown `target_id` (error), node without exits and without `is_ending: true`
 unreachable nodes (warning). It runs in `make scripts` and in the
 `validate-story-graph` hook. The runtime validator in `stories/graph.py` (task 3.3) uses the same names.
 
-## LLM provider and budget
-Default provider: **Gemini** through the `google-genai` library (named here,
-added with task 13.1, not before). Optional Vertex AI with GCP project credits
-uses the same library. Keys only from environment variables. `LLMBudgetGuard`
-wraps any provider: a per-session call cap and a global daily call cap; when a
-cap is hit the call goes to the offline narrator, with no error shown to the player.
+## Two transports, one pipeline
+Telnet and the web terminal are thin adapters over the same code (R6.5, R7.5-R7.7):
+```mermaid
+flowchart LR
+  T[Telnet adapter] --> F[session facade]
+  W[WebSocket adapter] --> F
+  F --> E[engine]
+  F --> N[narrator]
+  F --> P[render pipeline]
+  P --> B[(game bytes)] --> TH[throttle] --> T
+  TH --> W
+  W --> X[xterm.js + CRT CSS]
+```
+- `render/pipeline.py`: one function from a view model to `bytes`: wrap at 80, 16
+  ANSI colors by role, boxes (UTF-8/CP437/ASCII), i18n. Always CRLF.
+- `server/session.py`: the facade. It talks to a `Transport` Protocol
+  (`read_line`, `write_bytes`, `close`) and knows nothing else about the client.
+- `render/throttle.py` only delays writes; the bytes are the same at any baud.
+- Adapters add only protocol framing (Telnet option negotiation, WebSocket frames).
+- The CRT look (scanlines, glow, font) is CSS/JS in `static/`; xterm.js receives
+  the same bytes as `nc`.
+- **P14** proves it: the same seed and command script run through both adapters
+  (fake telnetlib3 writer, fake WebSocket) must give equal game byte streams.
 
-## Public demo access
-Web terminal only, behind a username/password login gate (credentials go in the
-Devpost testing-instructions field). Per-IP rate limit on login and messages.
-Hosted on Google Cloud Run (max-instances 1, scale to zero). Real Telnet is shown
-locally and in the video. See ADR 0007.
+## LLM provider
+Provider interface in `narrator/`. `OfflineNarrator` is deterministic and needs no
+key: it is the only narrator in tests, CI and offline demos (R4.5, R4.6).
+`GeminiProvider` uses the `google-genai` SDK (named here; added to `pyproject`
+only by task 13.1). The key comes from `GEMINI_API_KEY`; Vertex AI is optional with
+the same SDK. Tests inject a fake client and make no network calls (R4.7).
+Model id and SDK usage were checked on 2026-11-26: see ADR 0006 (default
+`gemini-3.5-flash-lite`; `gemini-2.5-flash` is deprecated).
+`LLMBudgetGuard` wraps any provider: per-session cap (30) and daily cap (500).
+A cap, a missing key, a timeout or an invalid reply sends that turn to the
+offline narrator, with no error shown (R13.4, R13.5).
+
+## Deployment and cost protection
+```mermaid
+flowchart TD
+  U[Judge browser] -->|HTTPS + WSS| CR[Cloud Run: 1 container, max-instances 1, min 0]
+  CR --> L{BBS login: user + password from env}
+  L -->|bad| BO[backoff, then lockout per address]
+  L -->|ok| S[session facade]
+  S --> G{budget guard: session cap, daily cap, key present?}
+  G -->|yes| GM[Gemini via google-genai]
+  G -->|no or error| OF[offline narrator]
+  GCP[GCP budget alert] -.->|email| Owner
+```
+- **Container:** one `Dockerfile`, non-root, listens on `$PORT` (web only). No
+  secrets in the image; user, password and key come from env or Secret Manager.
+- **Cloud Run:** scale to zero (cost 0 when idle), `max-instances 1` (one process,
+  so in-memory counters are exact), WebSocket supported. A request timeout (up to
+  60 min) closes the socket: the client sees a normal carrier drop and resumes
+  from the save. Raw Telnet is not possible on Cloud Run; it runs locally.
+- **Login:** shown inside the session, so it is part of the BBS fiction and is the
+  same on both transports. `hmac.compare_digest` on both fields, one generic error.
+  Failures per address back off (1, 2, 4... seconds, capped) and lock out for a
+  window. Passwords are never logged. `shortcut`: in-memory state resets on
+  restart; with one instance that is accepted.
+- **Wallet protection, in order:** login gate, per-session call cap, global daily
+  cap, offline fallback, GCP budget alert. The alert only notifies, so the app caps
+  are the hard barrier.
+- Credentials go in the Devpost testing-instructions field. See ADR 0007.
 
 ## Error handling
 - LLM: timeout, HTTP error, JSON error or schema error -> offline narrator + counter in logs.
@@ -104,11 +155,14 @@ locally and in the video. See ADR 0007.
 - **P11 Save round trip:** `load(save(state)) == state`.
 - **P12 Carrier drop resume:** after drop + save + load, the next round equals the round that would have followed with no drop.
 - **P13 i18n parity:** `en` and `es-ES` catalogs have equal key sets.
+- **P14 Transport parity:** for any seed and command script, the Telnet adapter and the web adapter emit identical game bytes (golden file for one fixed script too).
+- **P15 Budget fallback:** for any call sequence, calls to the provider never exceed the session or daily cap; beyond it (or with no key) the offline narrator answers.
+- **P16 Login gate:** only the exact credentials pass; after N failures from one address the next attempt is refused until the backoff window ends.
 
 ## Testing strategy
-Unit tests with concrete cases, hypothesis for P1-P13, loopback integration
+Unit tests with concrete cases, hypothesis for P1-P16, loopback integration
 tests for Telnet and WebSocket with the offline narrator, fake clock for baud
-and timeouts, fake provider for LLM failures.
+and timeouts, fake provider and fake `google-genai` client for LLM failures, no network.
 
 ## Decisions
-See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 offline narrator, 0006 Gemini provider, 0007 public demo on Cloud Run).
+See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 offline narrator, 0006 Gemini provider, 0007 public demo on Cloud Run, 0008 two transports one pipeline).

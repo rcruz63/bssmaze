@@ -44,6 +44,10 @@ Judges play it through a web terminal; purists use real `telnet`.
    THEN the system SHALL use the offline narrator for that turn.
 4. THE narrator SHALL NOT have any means to alter `GameState`.
 5. WHERE no API key is configured THE system SHALL run fully offline.
+6. THE Gemini implementation SHALL use the `google-genai` SDK behind the provider
+   interface; the deterministic offline narrator SHALL need no API key and SHALL
+   be the only narrator used in tests, CI and offline demos.
+7. THE tests SHALL make no network calls; the Gemini provider is tested with a fake client.
 
 ## R5 - Free-text commands as typed actions
 1. WHEN the player types free text THE narrator SHALL return a `ProposedAction`
@@ -60,12 +64,24 @@ Judges play it through a web terminal; purists use real `telnet`.
 3. THE renderer SHALL draw boxes in UTF-8, with CP437 and ASCII fallbacks.
 4. WHERE a baud rate is configured THE output layer SHALL throttle bytes at
    `baud / 10` bytes per second, and the engine SHALL be unaware of it.
+5. THE system SHALL have exactly one render pipeline (80-column wrap, 16-color
+   ANSI, box drawing, i18n, baud throttle) in `render/`; no transport SHALL
+   format, color or wrap text on its own.
+6. THE throttle SHALL only delay bytes; it SHALL NOT change their content or order.
 
 ## R7 - Telnet and web access
 1. THE server SHALL accept real Telnet clients (`telnet`, `nc`) on a configurable port.
 2. THE server SHALL serve a web terminal (xterm.js over WebSocket) that offers the same session.
 3. THE server SHALL cap concurrent sessions and idle time.
 4. THE server SHALL never log player text beyond the handle and session id.
+5. THE Telnet server and the web terminal SHALL be thin transports over one shared
+   session facade and one engine: each only moves bytes and has no game, layout or
+   color logic.
+6. WHEN the same seed and the same command script are fed through the Telnet adapter
+   and the web adapter THE two game byte streams SHALL be identical (transport
+   protocol framing, such as Telnet option negotiation, is excluded).
+7. THE CRT look (scanlines, phosphor glow, font) SHALL live only in the web
+   frontend CSS/JS and SHALL NOT change the byte stream.
 
 ## R8 - BBS experience
 1. WHEN a user connects THE system SHALL show a login screen, ask for a handle,
@@ -100,10 +116,19 @@ Judges play it through a web terminal; purists use real `telnet`.
 
 ## R13 - Public demo access and LLM budget
 **Story:** As the owner, I want strangers unable to spend my LLM budget.
-1. WHERE the web terminal is exposed publicly THE server SHALL require a username and password (from environment variables) before opening a game session.
-2. IF the credentials are wrong THEN the server SHALL refuse the session and rate-limit repeated attempts per client address.
-3. THE system SHALL cap LLM calls per session (default 30).
-4. THE system SHALL cap LLM calls per day across all sessions (default 500).
-5. WHEN either cap is reached THE system SHALL use the offline narrator for the rest of the session or day, without an error shown to the player.
-6. THE credentials SHALL never be in the repository; they are given to judges in the Devpost testing-instructions field.
+1. WHERE the web terminal is exposed publicly THE session SHALL show a BBS-style
+   login (username, then password without echo) before any game screen, and
+   SHALL read the expected credentials from environment variables.
+2. THE credential check SHALL use a constant-time comparison and SHALL not reveal
+   which of the two fields was wrong.
+3. WHEN login fails repeatedly from one client address THE server SHALL apply
+   growing delays and then a temporary lockout, in fiction ("SysOp says: busy").
+4. THE system SHALL cap LLM calls per session (default 30) and per day across all
+   sessions (default 500).
+5. WHEN a cap is reached, or the API key is missing, or the provider fails THE
+   system SHALL use the offline narrator, without an error shown to the player.
+6. THE credentials SHALL never be in the repository; they are given to judges in
+   the Devpost testing-instructions field.
 7. THE server SHALL never log the password.
+8. THE demo SHALL run in a container on Google Cloud Run with max-instances 1,
+   scale to zero, WebSocket support and a GCP budget alert.

@@ -49,6 +49,7 @@ Ver `.kiro/steering/code-style.md`: archivos de menos de 200 líneas, funciones 
 | Engine change needs property tests | guardar en `engine/` | recordatorio al agente |
 | `.kiro` guards | guardar `.gitignore`, inicio de sesión | `check_gitignore_kiro.py` |
 | Task gate | antes y después de una tarea | `make check` |
+| `devlog-reminder` | después de una tarea | recordatorio al agente: entrada en `DEVLOG.md` |
 
 ## Demo pública
 Solo terminal web con usuario y contraseña, en Google Cloud Run (ADR 0007). El

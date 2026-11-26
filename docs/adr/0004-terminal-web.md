@@ -23,4 +23,5 @@ sesión que usa Telnet. Un servidor `asyncio` sirve la página y el WebSocket (b
 - Cliente propio en HTML: reinventa el emulador de terminal.
 
 ## Consecuencias
+Telnet y web comparten tubería de salida y fachada de sesión (ADR 0008).
 Va protegida con login (ADR 0007). Hay que vendorizar xterm.js (licencia MIT) y anotarlo en el README.

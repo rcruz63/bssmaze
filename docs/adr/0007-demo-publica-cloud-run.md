@@ -16,7 +16,8 @@ desconocidos gasten el presupuesto.
 4. Cloud Run no sirve TCP crudo: el **Telnet real** se muestra en local y en el vídeo.
    Extra opcional más adelante: una VM pequeña con puerto Telnet.
 5. Límites: tope de llamadas LLM por sesión y por día, con respaldo al narrador offline;
-   límite de intentos de login por dirección.
+   límite de intentos de login por dirección (esperas crecientes y bloqueo temporal),
+   comparación de credenciales en tiempo constante y pantalla de login dentro de la ficción BBS.
 6. **AWS** (hay créditos) queda documentado como alternativa equivalente.
 
 ## Motivos
@@ -26,4 +27,4 @@ desconocidos gasten el presupuesto.
 ## Consecuencias
 Con una instancia, un reinicio pone el contador diario a cero; es un límite aceptado
 (`shortcut`) y la alerta de presupuesto de GCP es la segunda barrera.
-Tareas 13.5 y 14.3 a 14.8; requisitos R13.
+Tareas 7.4, 13.5 y 14.3 a 14.8; requisitos R13.

@@ -24,9 +24,10 @@ state is saved; call back and the fight resumes.
 ## How Kiro was used
 | Kiro feature | What we did | Where |
 |---|---|---|
-| **Specs** | EARS requirements, design with 13 correctness properties for property tests, ordered tasks with day markers | [`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/) |
+| **Specs** | EARS requirements, design with 16 correctness properties for property tests, ordered tasks with day markers | [`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/) |
 | **Steering** | Always-on product/tech/structure, architecture golden rule, code style, retro terminal rules, testing, git; `fileMatch` for `engine/**`; manual submission checklist | [`.kiro/steering/`](.kiro/steering/) |
-| **Hooks** | `run-tests-on-save` (ruff fix + pytest), format + file-length, no-nested-loops, `validate-story-graph`, engine test reminder, task gate (`make check`), `.kiro`-not-ignored guard | [`.kiro/hooks/`](.kiro/hooks/) |
+| **Hooks** | `run-tests-on-save` (ruff fix + pytest), format + file-length, no-nested-loops, `validate-story-graph`, engine test reminder, task gate (`make check`), devlog reminder, `.kiro`-not-ignored guard | [`.kiro/hooks/`](.kiro/hooks/) |
+| **Devlog** | `DEVLOG.md` is the build diary; steering rule `devlog.md` and hook `devlog-reminder` make the agent log each milestone and each property-test failure | [`DEVLOG.md`](DEVLOG.md) |
 | **Strategy** | Vertical slice first (engine, offline narrator, renderer, Telnet) before the LLM | [`tasks.md`](.kiro/specs/telnet-tales/tasks.md) |
 | **Agent rules** | Same rules for any agent | [`AGENTS.md`](AGENTS.md) |
 
@@ -42,6 +43,7 @@ flowchart LR
   Narrator -->|ProposedAction| Engine
   Stories[stories: YAML] --> Engine
 ```
+Telnet and the web terminal share one render pipeline and one session facade, so both send the same bytes.
 Details: [design.md](.kiro/specs/telnet-tales/design.md). Spanish docs and ADRs are in [`docs/`](docs/).
 
 ## Quickstart

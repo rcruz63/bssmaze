@@ -18,6 +18,8 @@ Kiroween 2026 (Resurrection). Game text in English; code comments and `/docs` in
 8. Every `engine/` change needs hypothesis property tests plus pytest unit tests.
 9. A task is done only if `make check` passes. Never tick `tasks.md` otherwise.
 10. Never add `.kiro` to `.gitignore`. Never commit secrets.
+11. After every milestone (task done, ADR, notable decision) and every hypothesis
+    failure, append a short entry to `DEVLOG.md` (`.kiro/steering/devlog.md`).
 
 ## Commands
 `uv sync` | `make check` | `uv run pytest` | `uv run ruff check .` | `uv run mypy`
@@ -26,4 +28,5 @@ Kiroween 2026 (Resurrection). Game text in English; code comments and `/docs` in
 - Spec: `.kiro/specs/telnet-tales/` (requirements, design, tasks)
 - Hooks: `.kiro/hooks/` backed by `scripts/` (`run-tests-on-save`, `validate-story-graph`, ...)
 - Story vocabulary: node `id`, `exits`, `target_id`, `is_ending`
+- Build diary for judges: `DEVLOG.md`
 - Game rules: `docs/game-design.es.md`; decisions: `docs/adr/`

@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "devlog-reminder",
+      "description": "After a spec task: reminds the agent to write the DEVLOG.md entry required by .kiro/steering/devlog.md.",
+      "trigger": "PostTaskExecution",
+      "action": {
+        "type": "agent",
+        "prompt": "Per .kiro/steering/devlog.md: append a short entry (what happened, why it matters, what we learned) at the top of the Log in DEVLOG.md for this task, update the matching hackathon section if relevant, and tick 'DEVLOG entry added' under the task in tasks.md. If hypothesis found a failure, include the shrunk counterexample in plain words, the rule it broke and the fix. Keep it short and honest."
+      }
+    }
+  ]
+}
