@@ -9,6 +9,7 @@ Dec is buffer for submission (deadline 4 Dec).
 
 ## Day 0 - Thu 26 Nov: foundation
 - [x] 0. Bootstrap repo, steering, hooks, spec, docs, tooling (R12)
+  - [x] 0.1 `scripts/validate_story_graph.py` + hooks `run-tests-on-save`, `validate-story-graph`; vocabulary `target_id` / `is_ending` (R2.2, R12.2)
   - Verify: `make check`
 
 ## Day 1 - Fri 27 Nov: engine, story, offline narrator (runnable slice)
@@ -68,17 +69,23 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] 12.2 Server: save, in-fiction messages, close; resume on reconnect (R9.2, R9.3) - P12
   - Verify: `make check`; forced-drop integration test
 - [ ] 13. LLM narrator
-  - [ ] 13.1 `narrator/anthropic.py`: HTTPS client, timeout, key from env (R4.3)
+  - [ ] 13.1 `narrator/gemini.py`: Gemini client (`google-genai`, added with `uv add`), timeout, `GEMINI_API_KEY` from env; optional Vertex AI (R4.3) - ADR 0006
   - [ ] 13.2 `narrator/prompts.py`: bounded context, delimited player text (R5.4)
   - [ ] 13.3 `narrator/guard.py`: JSON parse, schema, fallback to offline (R4.3, R5.5) - P8
   - [ ] 13.4 Fake-provider tests: timeout, garbage, injection strings
+  - [ ] 13.5 `narrator/budget.py`: per-session and daily call caps, fallback to offline (R13.3-R13.5)
   - Verify: `make check`
 
 ## Day 4 - Mon 30 Nov: web terminal
 - [ ] 14. Web terminal
   - [ ] 14.1 `server/web.py`: WebSocket endpoint sharing the session loop (R7.2)
   - [ ] 14.2 Static page with xterm.js (vendored, license noted), CRT styling
-  - [ ] 14.3 Deployment recipe (Dockerfile or Fly.io/Render), public URL
+  - [ ] 14.3 Auth gate: username/password from env on the WebSocket, per-IP rate limit (R13.1, R13.2, R13.7)
+  - [ ] 14.4 Per-session turn cap wired to the LLM budget guard (R13.3)
+  - [ ] 14.5 `Dockerfile` (web port only, non-root, no secrets in the image)
+  - [ ] 14.6 Deploy to Google Cloud Run: max-instances 1, scale to zero, secrets via env/Secret Manager, public URL - ADR 0007
+  - [ ] 14.7 GCP budget alert; check the daily cap works with a forced fallback
+  - [ ] 14.8 Credentials into the Devpost testing-instructions field (not in the repo)
   - Verify: `make check`; open the URL in a browser
 
 ## Day 5 - Tue 1 Dec: polish, demo, submission prep
@@ -89,7 +96,7 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] 16.1 README: screenshots, demo URL, Kiro usage section (R12.4)
   - [ ] 16.2 Demo video script and recording (< 3 min)
   - [ ] 16.3 Blog post and social post draft (#KiroweenHackathon26)
-  - [ ] 16.4 Walk `#submission-checklist` steering file
+  - [ ] 16.4 Walk `#submission-checklist` steering file (demo credentials in Devpost, Telnet shown in video)
   - Verify: `make check` on a fresh clone
 
 ## Buffer - Wed 2 to Fri 4 Dec

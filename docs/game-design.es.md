@@ -38,14 +38,14 @@ encuentros. Se cargan desde YAML y se validan con Pydantic.
   title: The Sealed Crypt
   text: A rusty door hums with static.
   exits:
-    - {label: north, target: crypt, requirement: {item: iron_key}}
+    - {label: north, target_id: crypt, requirement: {item: iron_key}}
   items: []
   encounter: null
-  final: false
+  is_ending: false
 ```
 El **validador de grafo** comprueba: nodo inicial existe, todas las referencias
-existen, todos los nodos son alcanzables desde el inicio, no hay nodos sin salida
-(salvo finales) y desde cualquier nodo se puede llegar a un final.
+existen (`target_id`), todos los nodos son alcanzables desde el inicio, no hay nodos sin salida
+(salvo los marcados `is_ending: true`) y desde cualquier nodo se puede llegar a un final.
 
 ## 5. Combate por turnos
 - Lo resuelve solo el motor. Ronda: jugador, luego enemigo.
@@ -104,6 +104,10 @@ Catálogos `en` y `es-ES` solo para textos de interfaz (menús, errores, ayuda).
 falta una clave en `es-ES` se usa `en`. Un test exige que ambos tengan las mismas claves.
 
 ## 13. Proveedor de LLM
-Interfaz `NarratorProvider` en `narrator/`. Por defecto, Anthropic Claude Haiku
-(rápido, barato, bueno con JSON estricto). La clave va en `ANTHROPIC_API_KEY`,
-nunca en el repositorio. Ver ADR 0005.
+Interfaz `NarratorProvider` en `narrator/`. Por defecto, Gemini (biblioteca
+`google-genai`; opcionalmente Vertex AI con créditos de GCP). La clave va en
+`GEMINI_API_KEY`, nunca en el repositorio. Ver ADR 0006.
+
+El script `scripts/validate_story_graph.py` hace una versión ligera de estas
+comprobaciones sobre `stories/` (destinos, callejones sin salida, líneas de más de
+80 columnas, nodos inalcanzables) y corre en `make check`.

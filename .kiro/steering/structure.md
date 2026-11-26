@@ -13,7 +13,8 @@ src/telnet_tales/
   render/    80-column formatter, ANSI themes, box drawing, baud throttle, i18n.
 stories/     story data files (YAML). Content, not code.
 tests/       mirrors src/ one to one (tests/engine/test_dice.py <-> engine/dice.py).
-scripts/     repo-rule checkers used by hooks and `make check`.
+scripts/     repo-rule checkers used by hooks and `make check`
+             (`validate_story_graph.py` + `story_validation/` for `stories/`).
 docs/        Spanish documentation and ADRs (docs/adr/).
 .kiro/       steering, specs, hooks. Always committed.
 ```

@@ -1,6 +1,6 @@
 # ADR 0004: Terminal web para el jurado
 
-- Estado: aceptada (detalles en la tarea 14)
+- Estado: aceptada (detalles en la tarea 14; acceso y alojamiento en ADR 0007)
 - Fecha: 2026-11-26
 
 ## Contexto
@@ -23,4 +23,4 @@ sesión que usa Telnet. Un servidor `asyncio` sirve la página y el WebSocket (b
 - Cliente propio en HTML: reinventa el emulador de terminal.
 
 ## Consecuencias
-Hay que vendorizar xterm.js (licencia MIT) y anotarlo en el README.
+Va protegida con login (ADR 0007). Hay que vendorizar xterm.js (licencia MIT) y anotarlo en el README.

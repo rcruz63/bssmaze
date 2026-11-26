@@ -26,7 +26,7 @@ state is saved; call back and the fight resumes.
 |---|---|---|
 | **Specs** | EARS requirements, design with 13 correctness properties for property tests, ordered tasks with day markers | [`.kiro/specs/telnet-tales/`](.kiro/specs/telnet-tales/) |
 | **Steering** | Always-on product/tech/structure, architecture golden rule, code style, retro terminal rules, testing, git; `fileMatch` for `engine/**`; manual submission checklist | [`.kiro/steering/`](.kiro/steering/) |
-| **Hooks** | Lint and file-length on save, no-nested-loops, engine test reminder, task gate (`make check`), `.kiro`-not-ignored guard | [`.kiro/hooks/`](.kiro/hooks/) |
+| **Hooks** | `run-tests-on-save` (ruff fix + pytest), format + file-length, no-nested-loops, `validate-story-graph`, engine test reminder, task gate (`make check`), `.kiro`-not-ignored guard | [`.kiro/hooks/`](.kiro/hooks/) |
 | **Strategy** | Vertical slice first (engine, offline narrator, renderer, Telnet) before the LLM | [`tasks.md`](.kiro/specs/telnet-tales/tasks.md) |
 | **Agent rules** | Same rules for any agent | [`AGENTS.md`](AGENTS.md) |
 
@@ -48,10 +48,16 @@ Details: [design.md](.kiro/specs/telnet-tales/design.md). Spanish docs and ADRs 
 ```bash
 uv sync
 make check          # ruff, mypy --strict, pytest + hypothesis, repo rules
-cp .env.example .env   # optional: add ANTHROPIC_API_KEY; works offline without it
+cp .env.example .env   # optional: add GEMINI_API_KEY; works offline without it
 ```
 Planned: `uv run telnet-tales` then `telnet localhost 2323` (or `nc localhost 2323`),
 and a web terminal at `http://localhost:8080`.
+
+## Demo and LLM
+Default LLM: Gemini (optional Vertex AI), with call caps and an offline fallback.
+The public demo is the web terminal only, behind a login (credentials in the
+Devpost testing instructions), on Google Cloud Run. Real Telnet runs locally and
+in the video. AWS is the documented alternative. See ADRs 0006 and 0007.
 
 ## Rules in one glance
 - The LLM never mutates state; every action is validated by the engine.

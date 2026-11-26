@@ -13,8 +13,11 @@ inclusion: always
   because the `pydantic.mypy` plugin is mature; do not add pyright).
 - **Telnet server:** `telnetlib3` (asyncio, ISC license, added in task 8) behind
   a thin `server/` adapter (see ADR 0003). **Web terminal:** WebSocket + xterm.js (ADR 0004).
-- **LLM:** provider interface in `narrator/`; default Anthropic Claude Haiku via
-  HTTPS, plus an offline deterministic narrator (ADR 0005).
+- **LLM:** provider interface in `narrator/`; default **Gemini** (`google-genai`,
+  added with task 13.1; optional Vertex AI), plus an offline deterministic narrator
+  (ADR 0005, ADR 0006). Per-session and daily call caps fall back to offline.
+- **Demo hosting:** Google Cloud Run, web terminal only, login gate (ADR 0007).
+  AWS stays documented as the alternative.
 - Secrets only in environment variables (`.env`, never committed).
   `.env.example` lists the names.
 
@@ -26,4 +29,4 @@ inclusion: always
 | Tests | `uv run pytest` |
 | Lint | `uv run ruff check .` and `uv run ruff format --check .` |
 | Types | `uv run mypy` |
-| Repo rules | `make scripts` |
+| Repo rules | `make scripts` (file length, nested loops, `.kiro`, story graph) |

@@ -19,3 +19,4 @@ scripts:
 	uv run python scripts/check_file_length.py
 	uv run python scripts/check_nested_loops.py src scripts
 	uv run python scripts/check_gitignore_kiro.py
+	uv run python scripts/validate_story_graph.py

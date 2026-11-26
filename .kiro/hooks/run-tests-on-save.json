@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "run-tests-on-save",
+      "description": "After a Python file under src/ or tests/ is saved: ruff lint with autofix, then the test suite. A non-zero exit sends the output to the agent, which must fix it before going on.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|/)(src|tests)/.*\\.py$",
+      "action": {
+        "type": "command",
+        "command": "uv run ruff check --fix && uv run pytest -q"
+      },
+      "timeout": 180
+    }
+  ]
+}

@@ -16,7 +16,8 @@ flowchart LR
   Narrator -->|ProposedAction| Engine
   Narrator --> Provider{{LLMProvider}}
   Provider --> Offline[OfflineNarrator]
-  Provider --> Claude[AnthropicProvider]
+  Provider --> Gemini[GeminiProvider]
+  Gemini -.->|budget caps| Guard[LLM budget guard]
   Stories[stories loader] --> Engine
   Engine -->|events| Narrator
   Render --> Throttle[baud throttle] --> Server
@@ -38,8 +39,8 @@ baud pacing are testable pure functions that both Telnet and web share.
 ## Data models (Pydantic v2, frozen where possible)
 - `Stats(wits, brawn, luck: int 0..5)`; `Player(handle, hit_points, max_hit_points, stats, inventory: tuple[str, ...])`.
 - `GameState(seed, draw_count, player, node_id, flags, combat: CombatState | None, turn, events)`.
-- `StoryNode(id, title, text, exits: list[Exit], items: list[str], encounter: str | None, final: bool)`.
-- `Exit(label, target, requirement: Requirement | None)`; `Requirement(item | stat+minimum)`.
+- `StoryNode(id, title, text, exits: list[Exit], items: list[str], encounter: str | None, is_ending: bool)`.
+- `Exit(label, target_id, requirement: Requirement | None)`; `Requirement(item | stat+minimum)`.
 - `Encounter(id, name, hit_points, attack_bonus, damage, flavor_hint)`.
 - `ProposedAction(action_type: Literal[...], target: str | None)` with `extra="forbid"`.
 - `ActionResult(ok, rejection: Rejection | None, events: tuple[GameEvent, ...])`.
@@ -57,6 +58,31 @@ def apply_action(
 ) -> tuple[GameState, ActionResult]: ...
 ```
 `apply_action` returns a new state (immutability makes property tests easy).
+
+## Story files and the graph validator
+Story vocabulary is the same everywhere (design, requirements, YAML, validator):
+node `id`, `exits`, exit `target_id`, node `is_ending`. A story file is a map
+`{start, nodes: [...]}` (a bare list of nodes is also accepted; the first node
+is then the start).
+`scripts/validate_story_graph.py` (package `scripts/story_validation/`, stdlib +
+PyYAML, no game imports) checks every file under `stories/`:
+unknown `target_id` (error), node without exits and without `is_ending: true`
+(error), any text or ASCII-art line wider than 80 display columns (error),
+unreachable nodes (warning). It runs in `make scripts` and in the
+`validate-story-graph` hook. The runtime validator in `stories/graph.py` (task 3.3) uses the same names.
+
+## LLM provider and budget
+Default provider: **Gemini** through the `google-genai` library (named here,
+added with task 13.1, not before). Optional Vertex AI with GCP project credits
+uses the same library. Keys only from environment variables. `LLMBudgetGuard`
+wraps any provider: a per-session call cap and a global daily call cap; when a
+cap is hit the call goes to the offline narrator, with no error shown to the player.
+
+## Public demo access
+Web terminal only, behind a username/password login gate (credentials go in the
+Devpost testing-instructions field). Per-IP rate limit on login and messages.
+Hosted on Google Cloud Run (max-instances 1, scale to zero). Real Telnet is shown
+locally and in the video. See ADR 0007.
 
 ## Error handling
 - LLM: timeout, HTTP error, JSON error or schema error -> offline narrator + counter in logs.
@@ -85,4 +111,4 @@ tests for Telnet and WebSocket with the offline narrator, fake clock for baud
 and timeouts, fake provider for LLM failures.
 
 ## Decisions
-See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 narrator fallback and provider).
+See `docs/adr/` (0001 golden rule, 0002 Python/uv, 0003 Telnet, 0004 web terminal, 0005 offline narrator, 0006 Gemini provider, 0007 public demo on Cloud Run).

@@ -19,7 +19,7 @@ uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy
-make scripts        # file length, nested loops, .kiro not ignored
+make scripts        # file length, nested loops, .kiro not ignored, story graph
 ```
 `make check` runs them all. **Never tick a checkbox in `tasks.md` while any of
 them fails.** If something cannot run, the task stays open and you say why.

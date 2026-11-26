@@ -38,4 +38,19 @@ Ver `.kiro/steering/code-style.md`: archivos de menos de 200 líneas, funciones 
 
 ## Verificación
 `make check` ejecuta ruff, mypy estricto, pytest (con hypothesis) y los scripts de
-`scripts/`. Los hooks de `.kiro/hooks/` lanzan esas mismas comprobaciones.
+`scripts/`. Los hooks de `.kiro/hooks/` lanzan esas mismas comprobaciones:
+
+| Hook | Cuándo | Qué ejecuta |
+|---|---|---|
+| `run-tests-on-save` | guardar `.py` en `src/` o `tests/` | `ruff check --fix` y `pytest -q` |
+| Format check + file length on save | guardar `.py` | `ruff format --check` y límite de 200 líneas |
+| No nested loops on save | guardar `.py` | `check_nested_loops.py` |
+| `validate-story-graph` | guardar archivo en `stories/` | `validate_story_graph.py` |
+| Engine change needs property tests | guardar en `engine/` | recordatorio al agente |
+| `.kiro` guards | guardar `.gitignore`, inicio de sesión | `check_gitignore_kiro.py` |
+| Task gate | antes y después de una tarea | `make check` |
+
+## Demo pública
+Solo terminal web con usuario y contraseña, en Google Cloud Run (ADR 0007). El
+proveedor LLM por defecto es Gemini (ADR 0006), con topes de llamadas por sesión y por
+día; al llegar al tope se usa el narrador offline.

@@ -23,7 +23,7 @@ Judges play it through a web terminal; purists use real `telnet`.
 
 ## R2 - Story graph
 **Story:** As an author, I want stories as data so I can add content safely.
-1. THE system SHALL load stories from YAML and validate them with Pydantic.
+1. THE system SHALL load stories from YAML and validate them with Pydantic. Field names are `id`, `exits`, `target_id` and `is_ending`.
 2. WHEN a story is loaded THE validator SHALL report unknown node references,
    unreachable nodes, dead ends (non-final nodes without exits) and missing start/end.
 3. IF validation fails THEN the loader SHALL refuse to start and list every error.
@@ -94,6 +94,16 @@ Judges play it through a web terminal; purists use real `telnet`.
 
 ## R12 - Repository quality (hackathon)
 1. THE repo SHALL carry an MIT `LICENSE` and a committed `.kiro/` folder.
-2. THE hooks SHALL enforce file length, no nested loops, lint, and `.kiro` not ignored.
+2. THE hooks SHALL enforce file length, format, no nested loops, lint with tests (`run-tests-on-save`), story graph validity (`validate-story-graph`), and `.kiro` not ignored.
 3. WHEN `make check` fails THE related task SHALL NOT be marked done.
 4. THE README SHALL link specs, steering, hooks, the demo URL and the video.
+
+## R13 - Public demo access and LLM budget
+**Story:** As the owner, I want strangers unable to spend my LLM budget.
+1. WHERE the web terminal is exposed publicly THE server SHALL require a username and password (from environment variables) before opening a game session.
+2. IF the credentials are wrong THEN the server SHALL refuse the session and rate-limit repeated attempts per client address.
+3. THE system SHALL cap LLM calls per session (default 30).
+4. THE system SHALL cap LLM calls per day across all sessions (default 500).
+5. WHEN either cap is reached THE system SHALL use the offline narrator for the rest of the session or day, without an error shown to the player.
+6. THE credentials SHALL never be in the repository; they are given to judges in the Devpost testing-instructions field.
+7. THE server SHALL never log the password.

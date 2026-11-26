@@ -24,5 +24,6 @@ Kiroween 2026 (Resurrection). Game text in English; code comments and `/docs` in
 
 ## Where to look
 - Spec: `.kiro/specs/telnet-tales/` (requirements, design, tasks)
-- Hooks: `.kiro/hooks/` backed by `scripts/`
+- Hooks: `.kiro/hooks/` backed by `scripts/` (`run-tests-on-save`, `validate-story-graph`, ...)
+- Story vocabulary: node `id`, `exits`, `target_id`, `is_ending`
 - Game rules: `docs/game-design.es.md`; decisions: `docs/adr/`

@@ -1,6 +1,6 @@
 # ADR 0005: Narrador offline de respaldo y proveedor de LLM por defecto
 
-- Estado: aceptada
+- Estado: aceptada; el punto 3 (proveedor por defecto) fue reemplazado por la ADR 0006
 - Fecha: 2026-11-26
 
 ## Decisión
