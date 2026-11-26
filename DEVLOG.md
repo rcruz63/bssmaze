@@ -70,6 +70,16 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-26 - Engine core: models and seeded dice
+**What happened:** `Stats`, `Player` and `GameState` are frozen Pydantic models that reject
+bad values (stat over 5, more than 8 items, hit points above max). `roll_d20` and `check`
+take a state and return the next one; the seed plus a draw count rebuild the dice, so a
+saved game continues the same rolls. Tests: unit tests plus hypothesis for P1 (range and
+rule) and P2 (same seed, same result, also after save and reload). No counterexample found.
+**Why it matters:** every later rule can be replayed and tested from a seed.
+**What we learned:** rebuilding the generator by replaying draws is simple but linear; fine
+for a 40-turn call, noted as a shortcut in the code.
+
 ### 2026-11-26 - [crew] User pushes SaveStore and GEMINI_MODEL
 **What happened:** the user asked for two spec changes and for crew work to be logged here.
 (1) The model id is read only from `GEMINI_MODEL`, and must be checked with the real key

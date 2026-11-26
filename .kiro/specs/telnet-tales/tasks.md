@@ -17,10 +17,10 @@ Dec is buffer for submission (deadline 4 Dec).
   - Verify: `make check`
 
 ## Day 1 - Fri 27 Nov: engine, story, offline narrator (runnable slice)
-- [ ] 1. Engine core models and seeded dice
-  - [ ] 1.1 `engine/models.py`: Stats, Player, GameState (frozen) (R1.1)
-  - [ ] 1.2 `engine/dice.py`: seeded RNG, `roll_d20`, `check` (R1.2, R1.3) - P1, P2
-  - [ ] DEVLOG entry added
+- [x] 1. Engine core models and seeded dice
+  - [x] 1.1 `engine/models.py`: Stats, Player, GameState (frozen) (R1.1)
+  - [x] 1.2 `engine/dice.py`: seeded RNG, `roll_d20`, `check` (R1.2, R1.3) - P1, P2
+  - [x] DEVLOG entry added
   - Verify: `uv run pytest tests/engine && make check`
 - [ ] 2. Actions and rules
   - [ ] 2.1 `engine/actions.py`: ProposedAction, allow-list, Rejection (R5.1, R5.2) - P7
