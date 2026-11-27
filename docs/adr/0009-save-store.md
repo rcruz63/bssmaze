@@ -1,27 +1,34 @@
-# ADR 0009: Guardado detrás de un Protocol `SaveStore`
+# ADR 0009: Estado en un Protocol `StateStore` (DynamoDB, memoria y archivo)
 
-- Estado: aceptada
-- Fecha: 2026-11-26
+- Estado: aceptada; la idea de guardar en GCS queda **reemplazada** por DynamoDB (ADR 0010)
+- Fecha: 2026-11-26; actualizada el 2026-11-27
 
 ## Contexto
-La caída de portadora guarda el estado y el mismo jugador lo retoma. En Cloud Run el disco
-del contenedor es efímero y la instancia escala a cero tras unos 15 minutos sin tráfico.
-Un juez que vuelva al día siguiente perdería la partida si el guardado vive solo en disco local.
+La caída de portadora guarda el estado y el mismo jugador lo retoma. Una Lambda no tiene
+disco persistente ni memoria compartida entre invocaciones. Además hacen falta un tope
+diario exacto de llamadas LLM y control de intentos de login. Todo eso es estado pequeño.
 
 ## Decisión
-1. La sesión guarda solo a través de `SaveStore`, un `typing.Protocol` con tres métodos:
-   `load(player_id) -> SaveGame | None`, `save(player_id, save_game) -> None`,
-   `delete(player_id) -> None`.
-2. `LocalFileSaveStore` es la implementación por defecto (disco local) y la única en tests.
-3. `GcsSaveStore` es opcional: se elige solo si existe la variable `GCS_SAVE_BUCKET`.
-   Importa `google-cloud-storage` de forma perezosa; la dependencia se añade a `pyproject`
-   solo en la tarea 14.11.
-4. Sin bucket, la reanudación funciona solo mientras la instancia siga activa. README, notas
-   de la demo y lista de envío deben decirlo.
+1. Tres Protocols pequeños, cada uno en su archivo:
+   - `SaveStore`: `load(player_id) -> SaveGame | None`, `save(player_id, save_game)`, `delete(player_id)`.
+   - `DailyBudget`: `try_consume(day, cap) -> bool` (atómico; nunca pasa del tope).
+   - `LoginAttempts`: `register_failure(ip, now)`, `blocked_until(ip, now)` y `reset(ip)`.
+2. `StateStore` es la composición de los tres. Hay tres implementaciones:
+   - `DynamoStateStore`: **una sola tabla** `PAY_PER_REQUEST` con TTL `ttl`. Claves
+     `SAVE#<handle>`, `BUDGET#<YYYY-MM-DD>` y `AUTH#<ip>`. El tope usa `ConditionExpression`.
+   - `MemoryStore`: tests y desarrollo.
+   - `FileStore`: juego local; un JSON por handle, `.bad` si está corrupto.
+3. `boto3` se importa de forma perezosa solo en `DynamoStateStore`. Viene en el runtime
+   de Lambda y no se empaqueta. Los tests usan un cliente falso, sin red.
+4. Se elige con `STATE_TABLE_NAME`: con valor, DynamoDB; vacío, `FileStore`.
+5. Las partidas llevan TTL (por ejemplo 30 días); un guardado caducado equivale a no existir.
 
 ## Motivos
-- Un Protocol pequeño permite cambiar de almacén sin tocar el motor ni la sesión.
-- El bucket es opcional para no añadir coste ni complejidad al desarrollo local.
+- Protocols pequeños: el motor y la sesión no saben dónde viven los datos.
+- El contador atómico elimina el límite antiguo de Cloud Run (contador en memoria que se reiniciaba).
+- Con Lambda sin estado, el guardado es lo único que une dos peticiones del mismo jugador.
 
 ## Consecuencias
-Propiedad P17 (ida y vuelta, `delete` idempotente). Tareas 11.1, 14.11 y 14.12; requisitos R10.4 a R10.6.
+Propiedades P11, P17 (ida y vuelta, `delete` idempotente), P15 (el tope no se supera ni con
+incrementos concurrentes en la implementación en memoria) y P16 (bloqueo monótono).
+Tareas 11 y 14.1; requisitos R10 y R13.

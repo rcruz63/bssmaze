@@ -13,6 +13,7 @@ Dec is buffer for submission (deadline 4 Dec).
 - [x] 0. Bootstrap repo, steering, hooks, spec, docs, tooling (R12)
   - [x] 0.1 `scripts/validate_story_graph.py` + hooks `run-tests-on-save`, `validate-story-graph`; vocabulary `target_id` / `is_ending` (R2.2, R12.2)
   - [x] 0.2 Align spec (Cloud Run, shared render pipeline, Gemini narrator), `DEVLOG.md`, steering `devlog.md`, hook `devlog-reminder` (R4.6, R6.5, R7.5, R13)
+  - [x] 0.3 Pivot spec and docs to serverless AWS: ADR 0006/0007/0009/0010, R4/R6/R7/R10/R13, `design-aws.md`, tasks (ADR 0010)
   - [x] DEVLOG entry added
   - Verify: `make check`
 
@@ -44,7 +45,14 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] DEVLOG entry added
   - Verify: `make check`
 
-## Day 2 - Sat 28 Nov: renderer, Telnet server, baud
+## Day 2 - Sat 28 Nov: smoke deploy, renderer, session facade
+- [ ] S1. Smoke deploy (do this first; ADR 0010 fallback decision depends on it)
+  - [ ] S1.1 User: `aws configure sso` (or a profile) in their own terminal, pick the region, enable Bedrock model access (never in the repo)
+  - [ ] S1.2 `infra/template.yaml` minimal: hello-world Lambda + HTTP API `POST /api/command` + DynamoDB table + S3 + CloudFront with `/api/*` routing (R7.2, R13.8)
+  - [ ] S1.3 `sam build && sam deploy --guided`; open the CloudFront URL, call `/api/command`, write and read one DynamoDB item
+  - [ ] S1.4 Note cold start time and any blocker in DEVLOG; if blocked, plan the Lightsail fallback (ADR 0010)
+  - [ ] DEVLOG entry added
+  - Verify: `curl` the CloudFront `/api/command` URL returns the hello-world JSON
 - [ ] 6. Renderer
   - [ ] 6.1 `render/wrap.py`: ANSI-aware visible width and word wrap (R6.1) - P9
   - [ ] 6.2 `render/theme.py`: green/amber role-to-color mapping (R6.2)
@@ -53,67 +61,72 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] 6.4 `render/i18n.py` + `en.yaml`/`es-ES.yaml` catalogs (R11) - P13
   - [ ] DEVLOG entry added
   - Verify: `make check`
-- [ ] 7. Session loop and BBS flow
-  - [ ] 7.1 `server/session.py`: login, handle, bulletins, menu, turn loop (R8.1)
-  - [ ] 7.2 Call time limit and `NO CARRIER` (R8.2, R8.3)
-  - [ ] 7.3 `server/transport.py`: `Transport` Protocol; session facade uses only it (R7.5)
-  - [ ] 7.4 `server/auth.py`: BBS login screen, `hmac.compare_digest`, backoff and lockout per address, injectable clock (R13.1-R13.3, R13.7) - P16
+- [ ] 7. Session facade, auth and HTTP schema (transport-neutral)
+  - [ ] 7.1 `server/session.py`: facade `handle_command(store, request) -> response`, stateless per command: login, handle, bulletins, menu, turn (R8.1, R7.9)
+  - [ ] 7.2 Call time limit counted in the token and `NO CARRIER` (R8.2, R8.3)
+  - [ ] 7.3 `server/transport.py`: `Transport` Protocol (read_line, write_bytes, close) used only by the local Telnet adapter (R7.5)
+  - [ ] 7.4 `server/auth.py`: credentials from env, `hmac.compare_digest`, HMAC-signed token with expiry, lockout via `LoginAttempts`, injectable clock (R13.1-R13.4, R13.7) - P16
+  - [ ] 7.5 `server/schema.py`: `CommandRequest` / `CommandResponse` (`extra="forbid"`, 200-char text cap) (R7.8)
   - [ ] DEVLOG entry added
-  - Verify: `make check` (session tested with in-memory streams)
-- [ ] 8. Telnet server
+  - Verify: `make check` (facade tested with `MemoryStore`, no sockets)
+- [ ] 8. Telnet server (local only, never deployed, ADR 0010)
   - [ ] 8.1 `server/telnet.py`: telnetlib3 shell adapter (add dependency with `uv add telnetlib3`), ADR 0003 (R7.1)
   - [ ] 8.2 Session cap and idle timeout (R7.3)
   - [ ] 8.3 Loopback integration test with `asyncio.open_connection`
   - [ ] DEVLOG entry added
   - Verify: `make check`; manual `nc localhost 2323`
-- [ ] 9. Baud throttle
+- [ ] 9. Baud throttle (local Telnet; the browser paces itself in 14.4)
   - [ ] 9.1 `render/throttle.py` with injectable clock (R6.4, R6.6) - P10
-  - [ ] 9.2 Wire into server writer, config via env; test that throttled and unthrottled bytes are equal (R6.6)
+  - [ ] 9.2 Wire into the Telnet writer, config via env; test that throttled and unthrottled bytes are equal (R6.6)
   - [ ] DEVLOG entry added
   - Verify: `make check`
 
-## Day 3 - Sun 29 Nov: combat, LLM, carrier drop
+## Day 3 - Sun 29 Nov: combat, state stores, LLM chain, carrier drop
+Decision point: if the serverless smoke deploy (S1) still fails today, switch to the Lightsail fallback (ADR 0010).
 - [ ] 10. Combat
   - [ ] 10.1 `engine/combat.py`: rounds, attack, flee (R3) - P4
   - [ ] 10.2 Story encounters wired to combat state
   - [ ] DEVLOG entry added
   - Verify: `make check`
-- [ ] 11. Save and resume
-  - [ ] 11.1 `server/saves.py`: `SaveGame`, `SaveStore` Protocol (load, save, delete) and `LocalFileSaveStore`: JSON per handle, validation, `.bad` quarantine (R10.1-R10.5) - P11, P17
+- [ ] 11. State stores and resume
+  - [ ] 11.1 `server/saves.py`, `server/budget_store.py`, `server/login_attempts.py`: tiny Protocols `SaveStore` (load, save, delete), `DailyBudget`, `LoginAttempts`; `server/state.py`: `StateStore` composition (R10.4) - ADR 0009
+  - [ ] 11.2 `SaveGame` and `MemoryStore`, `FileStore`: JSON per handle, validation, `.bad` quarantine, in-memory atomic budget (R10.1-R10.3, R10.5) - P11, P15, P16, P17
   - [ ] DEVLOG entry added
   - Verify: `make check`
+
 - [ ] 12. Carrier drop
   - [ ] 12.1 `engine/carrier.py`: drop decision from engine RNG (R9.1, R9.4)
   - [ ] 12.2 Server: save, in-fiction messages, close; resume on reconnect (R9.2, R9.3) - P12
   - [ ] DEVLOG entry added
   - Verify: `make check`; forced-drop integration test
-- [ ] 13. LLM narrator
-  - [ ] 13.1 `narrator/gemini.py`: `uv add google-genai` (first and only place it enters `pyproject`), model only from env `GEMINI_MODEL` (default per ADR 0006, not verified), timeout, `GEMINI_API_KEY`; optional Vertex AI; re-check SDK call against docs (R4.3, R4.6, R4.8, R4.10) - ADR 0006
-    - Verify the exact model id with the real key (`client.models.list()`) before relying on the default; a 404 means change `GEMINI_MODEL`, not code
-    - `narrator/list_models.py`: `python -m telnet_tales.narrator.list_models` prints available ids (R4.9); fake client in tests, no network
-  - [ ] 13.2 `narrator/prompts.py`: bounded context, delimited player text (R5.4)
-  - [ ] 13.3 `narrator/guard.py`: JSON parse, schema, fallback to offline (R4.3, R5.5) - P8
-  - [ ] 13.4 Fake-provider and fake `google-genai` client tests: timeout, garbage, injection strings, no key; no network (R4.6, R4.7)
-  - [ ] 13.5 `narrator/budget.py`: per-session and daily call caps, fallback to offline (R13.4, R13.5) - P15
+- [ ] 13. LLM narrator chain (Bedrock -> Gemini -> offline; ADR 0006)
+  - [ ] 13.1 `narrator/bedrock.py`: Converse API through lazy `boto3`, model only from env `BEDROCK_MODEL_ID`, 8 s timeout (R4.3, R4.6, R4.8, R4.10)
+    - Verify the exact model id with the real account (`list_foundation_models` / inference profiles) before relying on any example; access denied or 404 means change the env var, not code
+    - `narrator/list_models.py`: `python -m telnet_tales.narrator.list_models` prints available Bedrock and Gemini ids (R4.9); fake clients in tests, no network
+  - [ ] 13.2 `narrator/gemini.py`: `uv add google-genai` (first and only place it enters `pyproject`), model only from env `GEMINI_MODEL` (example not verified), `GEMINI_API_KEY`; re-check the SDK call against the docs (R4.6, R4.8, R4.10) - ADR 0006
+    - Verify the exact id with the real key (`client.models.list()`); a 404 means change `GEMINI_MODEL`, not code
+  - [ ] 13.3 `narrator/prompts.py`: bounded context, delimited player text (R5.4)
+  - [ ] 13.4 `narrator/guard.py`: JSON parse, schema, fallback (R4.3, R5.5) - P8
+  - [ ] 13.5 `narrator/chain.py`: `LLM_PROVIDER` plus availability; Bedrock -> Gemini -> offline (R4.6, R4.10)
+  - [ ] 13.6 Fake-provider and fake Bedrock/Gemini client tests: timeout, garbage, injection strings, no credentials, no network (R4.7)
+  - [ ] 13.7 `narrator/budget.py`: per-session cap (token counter) and daily cap through `DailyBudget`, fallback to offline (R13.5, R13.6) - P15
   - [ ] DEVLOG entry added
   - Verify: `make check`
 
-## Day 4 - Mon 30 Nov: web terminal
-- [ ] 14. Web terminal
-  - [ ] 14.1 `server/web.py`: WebSocket endpoint sharing the session loop (R7.2)
-  - [ ] 14.2 Static page with xterm.js (vendored, license noted), CRT styling
-  - [ ] 14.3 Wire `server/auth.py` into the web entry; credentials from env; client address from `X-Forwarded-For` of Cloud Run (R13.1-R13.3)
-  - [ ] 14.4 Wire the budget guard per session and per day (R13.4, R13.5)
-  - [ ] 14.9 `tests/server/test_transport_parity.py`: same seed and script through Telnet and web adapters, equal bytes; plus a golden file (R7.6) - P14
-  - [ ] 14.10 Check the CRT CSS/JS never alters bytes: no text transform in `static/` (R7.7)
-  - [ ] 14.5 `Dockerfile` (web only, listens on `$PORT`, non-root, no secrets in the image) (R13.8)
-  - [ ] 14.6 Deploy to Google Cloud Run: max-instances 1, min 0, WebSocket, secrets via env/Secret Manager, public URL (R13.8) - ADR 0007
-  - [ ] 14.7 GCP budget alert; check the daily cap works with a forced fallback
-  - [ ] 14.11 `server/gcs_saves.py`: `GcsSaveStore`, chosen only when `GCS_SAVE_BUCKET` is set, lazy import, `uv add google-cloud-storage` here only; fake client tests (R10.5) - P17
-  - [ ] 14.12 Create the bucket and grant the Cloud Run service account access; note in README and demo notes that without it resume works only while the instance is warm (R10.6) - ADR 0009
-  - [ ] 14.8 Credentials into the Devpost testing-instructions field (not in the repo)
+## Day 4 - Mon 30 Nov: web terminal and AWS deploy
+- [ ] 14. Web terminal and serverless deploy (ADR 0010)
+  - [ ] 14.1 `server/dynamo_state.py`: `DynamoStateStore` on one table; `ConditionExpression` budget, lockout with TTL, lazy `boto3`; fake client tests (R10.5, R13.3, R13.5) - P15, P16, P17
+  - [ ] 14.2 `server/lambda_handler.py` (thin): parse `CommandRequest`, call the facade, return `CommandResponse`; client IP from the HTTP API event (R7.2, R7.5, R7.9)
+  - [ ] 14.3 `make package`: `.zip` with `uv pip install --target --python-platform aarch64-manylinux2014` (pydantic, pyyaml; no boto3), plus `src/` and `stories/`; check the size (R13.8)
+  - [ ] 14.4 `static/`: xterm.js (vendored, license noted), CRT CSS, `terminal.js` with client-side baud pacing, fake telnet banner, `NO CARRIER` on `carrier_dropped` (R6.4, R7.2, R7.7)
+  - [ ] 14.5 `infra/template.yaml`: Lambda (arm64, reserved concurrency), HTTP API, DynamoDB (PAY_PER_REQUEST, TTL `ttl`), S3, CloudFront with `/api/*`, SSM or env for secrets (R13.8)
+  - [ ] 14.6 AWS Budgets alert in the template; check the daily cap works with a forced fallback (R13.5, R13.8)
+  - [ ] 14.7 `tests/server/test_transport_parity.py`: same seed and script through the Telnet adapter and the Lambda handler, equal bytes, plus a golden file (R7.6) - P14
+  - [ ] 14.8 Check the CRT CSS/JS and baud pacing never alter bytes: no text transform in `static/` (R7.7)
+  - [ ] 14.9 `docs/despliegue-aws.md` (Spanish): `sam build`, `sam deploy`, credentials as a user action, region, Bedrock access; README demo URL (R13.8)
+  - [ ] 14.10 `sam deploy` to the real account; verify `BEDROCK_MODEL_ID` with `list_models`; credentials into the Devpost testing-instructions field (not in the repo)
   - [ ] DEVLOG entry added
-  - Verify: `make check`; open the URL in a browser
+  - Verify: `make check`; open the CloudFront URL in a browser
 
 ## Day 5 - Tue 1 Dec: polish, demo, submission prep
 - [ ] 15. Polish

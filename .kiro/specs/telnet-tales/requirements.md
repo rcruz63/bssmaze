@@ -7,7 +7,7 @@ from `tasks.md`.
 ## Introduction
 A text adventure that imitates a 1980s Telnet BBS door game. The Python engine
 owns all rules; an LLM narrates and interprets text but never changes state.
-Judges play it through a web terminal; purists use real `telnet`.
+Judges play it through a web terminal; purists use real `telnet` locally.
 
 ## R1 - Deterministic game engine
 **Story:** As a player, I want fair, repeatable rules so the game feels honest.
@@ -44,13 +44,14 @@ Judges play it through a web terminal; purists use real `telnet`.
    THEN the system SHALL use the offline narrator for that turn.
 4. THE narrator SHALL NOT have any means to alter `GameState`.
 5. WHERE no API key is configured THE system SHALL run fully offline.
-6. THE Gemini implementation SHALL use the `google-genai` SDK behind the provider
-   interface; the deterministic offline narrator SHALL need no API key and SHALL
-   be the only narrator used in tests, CI and offline demos.
-7. THE tests SHALL make no network calls; the Gemini provider is tested with a fake client.
-8. THE Gemini model id SHALL always come from the env var `GEMINI_MODEL`, never from code.
-9. THE system SHALL offer `python -m telnet_tales.narrator.list_models`, which prints the model ids available to the configured key.
-10. IF the model returns 404 or any error THEN the turn SHALL use the offline narrator; the fix is to change `GEMINI_MODEL`, not code.
+6. THE Bedrock and Gemini implementations SHALL be thin adapters behind the provider
+   interface and SHALL be chained Bedrock -> Gemini -> offline; `LLM_PROVIDER` picks the
+   first link and availability decides the rest. The deterministic offline narrator
+   SHALL need no key or credentials and SHALL be the only narrator in tests and CI.
+7. THE tests SHALL make no network calls; both adapters are tested with fake clients.
+8. THE model ids SHALL come only from env vars `BEDROCK_MODEL_ID` and `GEMINI_MODEL`, never from code.
+9. THE system SHALL offer `python -m telnet_tales.narrator.list_models`, which prints the model ids available to the configured AWS account and Gemini key.
+10. IF a model returns 404, access denied or any error THEN the turn SHALL go to the next link of the chain, ending at the offline narrator; the fix is to change the env var, not code.
 
 ## R5 - Free-text commands as typed actions
 1. WHEN the player types free text THE narrator SHALL return a `ProposedAction`
@@ -65,26 +66,30 @@ Judges play it through a web terminal; purists use real `telnet`.
 1. THE renderer SHALL wrap output so no line exceeds 80 visible columns.
 2. THE renderer SHALL use only the 16 standard ANSI colors, with green and amber themes.
 3. THE renderer SHALL draw boxes in UTF-8, with CP437 and ASCII fallbacks.
-4. WHERE a baud rate is configured THE output layer SHALL throttle bytes at
-   `baud / 10` bytes per second, and the engine SHALL be unaware of it.
+4. WHERE a baud rate is configured THE output layer SHALL pace bytes at
+   `baud / 10` bytes per second: `render/throttle.py` for local Telnet, the browser
+   (xterm.js, client side) for the web. THE server SHALL NOT sleep to simulate baud,
+   and the engine SHALL be unaware of it.
 5. THE system SHALL have exactly one render pipeline (80-column wrap, 16-color
    ANSI, box drawing, i18n, baud throttle) in `render/`; no transport SHALL
    format, color or wrap text on its own.
 6. THE throttle SHALL only delay bytes; it SHALL NOT change their content or order.
 
 ## R7 - Telnet and web access
-1. THE server SHALL accept real Telnet clients (`telnet`, `nc`) on a configurable port.
-2. THE server SHALL serve a web terminal (xterm.js over WebSocket) that offers the same session.
-3. THE server SHALL cap concurrent sessions and idle time.
+1. THE server SHALL accept real Telnet clients (`telnet`, `nc`) on a configurable port; this adapter runs locally and is not deployed.
+2. THE web terminal SHALL be a static xterm.js page (S3 + CloudFront) that sends each command with `POST /api/command` to an API Gateway HTTP API (Lambda), same origin, no WebSocket and no CORS.
+3. THE system SHALL cap concurrent executions (Lambda reserved concurrency) and session age (token lifetime).
 4. THE server SHALL never log player text beyond the handle and session id.
-5. THE Telnet server and the web terminal SHALL be thin transports over one shared
+5. THE Telnet adapter and the Lambda handler SHALL be thin transports over one shared
    session facade and one engine: each only moves bytes and has no game, layout or
    color logic.
 6. WHEN the same seed and the same command script are fed through the Telnet adapter
-   and the web adapter THE two game byte streams SHALL be identical (transport
-   protocol framing, such as Telnet option negotiation, is excluded).
-7. THE CRT look (scanlines, phosphor glow, font) SHALL live only in the web
-   frontend CSS/JS and SHALL NOT change the byte stream.
+   and the Lambda handler THE two game byte streams SHALL be identical (protocol framing,
+   such as Telnet option negotiation or JSON envelope, is excluded).
+7. THE CRT look, the fake Telnet banner and the baud pacing SHALL live only in the web
+   frontend CSS/JS and SHALL NOT change the bytes.
+8. THE request and response bodies SHALL be pydantic models with `extra="forbid"`; the response carries the formatted text plus `baud`, `carrier_dropped` and `ending`.
+9. THE Lambda SHALL be stateless: all state goes through a `StateStore` and a signed session token.
 
 ## R8 - BBS experience
 1. WHEN a user connects THE system SHALL show a login screen, ask for a handle,
@@ -105,9 +110,9 @@ Judges play it through a web terminal; purists use real `telnet`.
 2. IF a save file is corrupt or invalid THEN the system SHALL refuse it and
    start a new game without crashing.
 3. Saves SHALL contain no secrets.
-4. THE session SHALL persist saves only through a `SaveStore` Protocol with `load(player_id)`, `save(player_id, save_game)` and `delete(player_id)`.
-5. THE default store SHALL be `LocalFileSaveStore` (local disk). WHERE env `GCS_SAVE_BUCKET` is set THE system SHALL use `GcsSaveStore` instead.
-6. WHERE no bucket is configured on Cloud Run THE docs SHALL state that resume works only while the instance is warm.
+4. THE session SHALL persist state only through a `StateStore`, the composition of `SaveStore` (`load(player_id)`, `save(player_id, save_game)`, `delete(player_id)`), `DailyBudget` and `LoginAttempts`.
+5. THE implementations SHALL be `FileStore` (local play), `MemoryStore` (tests) and `DynamoStateStore` (one table, on demand, TTL `ttl`), chosen by env `STATE_TABLE_NAME`.
+6. A save SHALL expire by TTL; an expired save SHALL behave as no save.
 
 ## R11 - Internationalization
 1. THE UI strings SHALL come from a catalog with `en` and `es-ES`.
@@ -120,21 +125,22 @@ Judges play it through a web terminal; purists use real `telnet`.
 3. WHEN `make check` fails THE related task SHALL NOT be marked done.
 4. THE README SHALL link specs, steering, hooks, the demo URL and the video.
 
-## R13 - Public demo access and LLM budget
+## R13 - Public demo access, cost protection and auth
 **Story:** As the owner, I want strangers unable to spend my LLM budget.
 1. WHERE the web terminal is exposed publicly THE session SHALL show a BBS-style
-   login (username, then password without echo) before any game screen, and
-   SHALL read the expected credentials from environment variables.
+   login (username, then password) before any game screen, and SHALL read the
+   expected credentials from `WEB_USER` and `WEB_PASSWORD` (env or SSM).
 2. THE credential check SHALL use a constant-time comparison and SHALL not reveal
    which of the two fields was wrong.
-3. WHEN login fails repeatedly from one client address THE server SHALL apply
-   growing delays and then a temporary lockout, in fiction ("SysOp says: busy").
-4. THE system SHALL cap LLM calls per session (default 30) and per day across all
-   sessions (default 500).
-5. WHEN a cap is reached, or the API key is missing, or the provider fails THE
+3. WHEN login fails repeatedly from one client IP (`AUTH#<ip>`) THE server SHALL apply
+   a progressive lockout stored with a TTL, in fiction ("SysOp says: busy").
+4. WHEN login succeeds THE server SHALL return an HMAC-signed short-lived token (secret `AUTH_SECRET`)
+   that the client sends on each command; a bad or expired token SHALL be refused.
+5. THE system SHALL cap LLM calls per session (`SESSION_LLM_CALL_CAP`, default 30) and
+   per day across all sessions (`DAILY_LLM_CALL_CAP`, default 500), the daily cap with an
+   atomic DynamoDB counter `BUDGET#<YYYY-MM-DD>` (exact, no reset on restart).
+6. WHEN a cap is reached, or no provider is available, or the provider fails THE
    system SHALL use the offline narrator, without an error shown to the player.
-6. THE credentials SHALL never be in the repository; they are given to judges in
-   the Devpost testing-instructions field.
-7. THE server SHALL never log the password.
-8. THE demo SHALL run in a container on Google Cloud Run with max-instances 1,
-   scale to zero, WebSocket support and a GCP budget alert.
+7. THE credentials and secrets SHALL never be in the repository; credentials are given to judges in
+   the Devpost testing-instructions field. THE server SHALL never log the password or token.
+8. THE demo SHALL run serverless on AWS (S3, CloudFront, HTTP API, Lambda, DynamoDB, Bedrock) described by one SAM template, with an AWS Budgets alert (ADR 0010).

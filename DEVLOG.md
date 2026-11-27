@@ -24,10 +24,11 @@ the same bytes.
 - Golden rule: the LLM never mutates state ([ADR 0001](docs/adr/0001-llm-nunca-modifica-el-estado.md)).
   Model output is a `ProposedAction` that the engine validates or rejects.
 - Python 3.12, uv, Pydantic v2, `mypy --strict`, pytest + hypothesis.
-- Narrator: Gemini through `google-genai`, plus a deterministic offline narrator
+- Narrator: a chain Amazon Bedrock, then Gemini, then a deterministic offline narrator
   that needs no key and runs all tests ([ADR 0006](docs/adr/0006-proveedor-llm-gemini.md)).
-- Public demo: web terminal on Google Cloud Run behind a BBS-style login, with
-  call caps that protect the credit ([ADR 0007](docs/adr/0007-demo-publica-cloud-run.md)).
+- Public demo: web terminal on serverless AWS (S3, CloudFront, HTTP API, Lambda,
+  DynamoDB) behind a BBS-style login, with call caps that protect the credit
+  ([ADR 0010](docs/adr/0010-serverless-aws.md), [ADR 0007](docs/adr/0007-demo-publica-cloud-run.md)).
 - One render pipeline and one session facade under both transports
   ([ADR 0008](docs/adr/0008-dos-transportes-una-tuberia.md)).
 
@@ -35,8 +36,8 @@ the same bytes.
 Expected, not yet met: keeping an LLM useful while it has no power over state;
 80 columns with ANSI colors; making a random carrier drop testable. Real failures
 will be written in the Log, with the property-test counterexample.
-Already hit: Gemini model ids from our notes conflict and are unverified; the id now
-comes only from `GEMINI_MODEL`.
+Already hit: Gemini model ids from our notes conflict and are unverified; ids now come
+only from `GEMINI_MODEL` and `BEDROCK_MODEL_ID`, and are checked with a list command.
 
 ## Accomplishments that we're proud of
 So far, only the foundation: steering, spec, hooks that run real scripts with tests,
@@ -49,7 +50,7 @@ and a story-graph validator. No game result is claimed yet.
 
 ## What's next
 Engine core and seeded dice, story loader, offline narrator, renderer, Telnet and
-web transports, combat, carrier drop, Gemini narrator, Cloud Run deploy, demo video.
+web transport, combat, carrier drop, the Bedrock/Gemini narrator chain, the AWS deploy, demo video.
 Plan and dates: [`tasks.md`](.kiro/specs/telnet-tales/tasks.md).
 
 ## Kiro Workflow
@@ -69,6 +70,21 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 
 ## Log
 Newest first.
+
+### 2026-11-27 - [crew] User picks serverless AWS and fixes four decisions
+**What happened:** the user and the crew bot compared Cloud Run, a Lightsail instance and
+serverless AWS. The user chose serverless AWS and fixed four technical decisions: (1) an
+HTTP API with `POST /api/command` instead of WebSockets, with baud pacing painted by the
+browser; (2) one DynamoDB table for saves, an exact daily LLM counter and login lockout;
+(3) a plain uv-built `.zip` with one SAM template; (4) real Telnet stays local, with a
+byte-parity test against the Lambda handler. Bedrock is the primary LLM, Gemini the
+fallback, offline last. A Kiro Crew worker rewrote ADR 0006, 0007, 0009, new ADR 0010,
+R4/R6/R7/R10/R13, the design (new `design-aws.md`), the tasks and the checklists.
+**Why it matters:** Kiro is an AWS product and the user has AWS credits. There is no
+hackathon bonus for using AWS, so this is a story choice, not a score choice. It also
+removes the old Cloud Run caveat: the daily counter no longer resets on restart.
+**What we learned:** a turn-based game does not need a live connection. Plan: smoke deploy
+on Sat 28 Nov; if serverless fails by Sun 29 Nov, fall back to Lightsail.
 
 ### 2026-11-26 - Engine core: models and seeded dice
 **What happened:** `Stats`, `Player` and `GameState` are frozen Pydantic models that reject

@@ -9,11 +9,11 @@ inclusion: manual
 - [ ] `.kiro/` committed with steering, specs and hooks. `git check-ignore -v .kiro` prints nothing.
 - [ ] Built within 30 Oct - 4 Dec 2026; no pre-existing code (README states it).
 - [ ] Category selected: **Resurrection**.
-- [ ] Working URL for judges (web terminal) plus Telnet instructions. The offline narrator works with no API key.
-- [ ] Demo credentials (web terminal login) in the Devpost **testing instructions** field only, never in the repo or README. Telnet shown locally/video (Cloud Run has no raw TCP).
-- [ ] Saves: `GCS_SAVE_BUCKET` set, or README and demo notes say resume works only while the instance is warm (ephemeral disk, scale to zero).
-- [ ] `GEMINI_MODEL` set in Cloud Run and checked with `list_models` and the real key.
-- [ ] Cloud Run: max-instances 1, GCP budget alert set, daily LLM cap checked.
+- [ ] Working URL for judges (CloudFront web terminal) plus Telnet instructions. The offline narrator works with no AWS or Gemini access.
+- [ ] Demo credentials (web terminal login) in the Devpost **testing instructions** field only, never in the repo or README. Telnet shown locally/video (the deployment has no raw TCP).
+- [ ] State: `STATE_TABLE_NAME` set in the Lambda; a carrier-drop save resumes after a day (DynamoDB, TTL).
+- [ ] `BEDROCK_MODEL_ID` (and `GEMINI_MODEL` if used) set and checked with `list_models` on the real account and key; Bedrock model access enabled in the region.
+- [ ] Serverless AWS deployed with `sam deploy`; AWS Budgets alert set; daily LLM cap checked.
 - [ ] Demo video under 3 minutes on YouTube (public or unlisted), no copyrighted music.
 - [ ] Text description: pitch, how Kiro was used (specs, steering, hooks, strategy, experiments), what was built.
 - [ ] README: quickstart, architecture diagram, screenshots, link to `.kiro/` artifacts.

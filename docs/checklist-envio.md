@@ -7,12 +7,12 @@ Versión de trabajo en español. La versión que usa el agente está en
 - [ ] `.kiro/` versionado; `git check-ignore -v .kiro` no imprime nada.
 - [ ] Código escrito entre el 30 de octubre y el 4 de diciembre de 2026.
 - [ ] Categoría Resurrection.
-- [ ] URL de demo (terminal web) y datos de Telnet. Funciona sin clave de API.
+- [ ] URL de demo (terminal web en CloudFront) y datos de Telnet. Funciona sin acceso a AWS ni clave de Gemini.
 - [ ] Usuario y contraseña de la demo solo en el campo *testing instructions* de Devpost, nunca en el repositorio.
-- [ ] Guardados: `GCS_SAVE_BUCKET` configurado, o README y notas de la demo avisan de que la reanudación solo funciona mientras la instancia siga activa.
-- [ ] `GEMINI_MODEL` configurado en Cloud Run y comprobado con `list_models` y la clave real.
-- [ ] Cloud Run con `max-instances 1`, alerta de presupuesto de GCP y tope diario de llamadas LLM comprobado.
-- [ ] Telnet real se muestra en local y en el vídeo (Cloud Run no sirve TCP crudo).
+- [ ] Estado: `STATE_TABLE_NAME` configurado en la Lambda; una partida guardada por caída de portadora se retoma al día siguiente (DynamoDB con TTL).
+- [ ] `BEDROCK_MODEL_ID` (y `GEMINI_MODEL` si se usa) configurados y comprobados con `list_models` en la cuenta y con la clave reales; acceso a modelos de Bedrock activado en la región.
+- [ ] Despliegue serverless hecho con `sam deploy`, alerta de AWS Budgets y tope diario de llamadas LLM comprobado.
+- [ ] Telnet real se muestra en local y en el vídeo (no se despliega).
 - [ ] Vídeo de menos de 3 minutos en YouTube.
 - [ ] Descripción: qué es, cómo se usó Kiro (specs, steering, hooks, estrategia, experimentos).
 - [ ] **Bonus:** entrada de blog sobre cómo se construyó con Kiro.

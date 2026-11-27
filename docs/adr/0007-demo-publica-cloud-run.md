@@ -1,30 +1,32 @@
-# ADR 0007: Demo pública en Google Cloud Run con acceso protegido
+# ADR 0007: Demo pública protegida (serverless en AWS; Cloud Run como alternativa)
 
-- Estado: aceptada
-- Fecha: 2026-11-26
+- Estado: **reemplazada en su decisión de alojamiento por la ADR 0010** (serverless en AWS).
+  Se conserva lo demás: demo solo web, acceso protegido y topes de gasto.
+- Fecha: 2026-11-26; actualizada el 2026-11-27
 
 ## Contexto
 El jurado solo prueba mediante una URL. Un LLM público sin protección permitiría que
 desconocidos gasten el presupuesto.
 
-## Decisión
-1. La demo pública es **solo la terminal web** (xterm.js sobre WebSocket, ADR 0004).
-2. Va protegida con **usuario y contraseña** (variables de entorno). Las credenciales se
-   entregan en el campo *testing instructions* de Devpost, visible solo para patrocinador y jurado.
-3. Alojamiento en **Google Cloud Run**: escala a cero, `max-instances 1`, soporta
-   WebSocket, alerta de presupuesto. Los créditos de GCP cubren también Gemini.
-4. Cloud Run no sirve TCP crudo: el **Telnet real** se muestra en local y en el vídeo.
-   Extra opcional más adelante: una VM pequeña con puerto Telnet.
-5. Límites: tope de llamadas LLM por sesión y por día, con respaldo al narrador offline;
-   límite de intentos de login por dirección (esperas crecientes y bloqueo temporal),
-   comparación de credenciales en tiempo constante y pantalla de login dentro de la ficción BBS.
-6. **AWS** (hay créditos) queda documentado como alternativa equivalente.
+## Decisión (vigente)
+1. La demo pública es **solo la terminal web** (xterm.js, HTTP, ADR 0004 y 0010).
+2. Va protegida con **usuario y contraseña** (variables de entorno o SSM). Las credenciales
+   se entregan en el campo *testing instructions* de Devpost, visible solo para patrocinador y jurado.
+3. Alojamiento: **S3 + CloudFront + API Gateway HTTP API + Lambda + DynamoDB** (ADR 0010).
+4. El **Telnet real** se muestra en local y en el vídeo; no se despliega.
+5. Límites: tope de llamadas LLM por sesión y por día (contador atómico en DynamoDB, ADR 0009),
+   límite de intentos de login por IP (bloqueo progresivo con TTL), comparación de
+   credenciales en tiempo constante y pantalla de login dentro de la ficción BBS.
 
-## Motivos
-- Con una sola instancia, el contador diario en memoria es suficiente y simple.
-- Escalar a cero evita coste fuera de la evaluación.
+## Decisión original reemplazada
+Alojar en **Google Cloud Run** (una instancia, WebSocket, contador en memoria, alerta de GCP).
+Se conserva como **alternativa documentada**, junto con Lightsail.
+
+## Motivos del cambio
+- Kiro es de AWS y hay créditos de AWS (no hay bonus del hackathon por ello).
+- El contador diario en DynamoDB es exacto y no se reinicia; en Cloud Run el contador en
+  memoria se ponía a cero con cada reinicio (el límite `shortcut` de antes desaparece).
+- Sin WebSocket: el juego es por turnos y no necesita conexión viva.
 
 ## Consecuencias
-Con una instancia, un reinicio pone el contador diario a cero; es un límite aceptado
-(`shortcut`) y la alerta de presupuesto de GCP es la segunda barrera.
-Tareas 7.4, 13.5 y 14.3 a 14.8; requisitos R13.
+Tareas 7.4, 13.5 y 14; requisitos R13.

@@ -9,8 +9,10 @@ src/telnet_tales/
   engine/    pure rules and state. No I/O, no LLM, no clock, no globals.
   narrator/  LLM client, prompts, offline fallback narrator, action parsing.
   stories/   loader + validator for story data (the data itself is in /stories).
-  server/    Telnet and WebSocket layers, sessions, persistence, carrier drop I/O.
+  server/    session facade, thin `lambda_handler.py`, local Telnet adapter, state stores, auth.
   render/    80-column formatter, ANSI themes, box drawing, baud throttle, i18n.
+static/      web terminal (xterm.js, CRT CSS, client-side baud pacing). No game logic.
+infra/       AWS SAM template (`template.yaml`): Lambda, HTTP API, DynamoDB, S3, CloudFront, Budget.
 stories/     story data files (YAML). Content, not code.
 tests/       mirrors src/ one to one (tests/engine/test_dice.py <-> engine/dice.py).
 scripts/     repo-rule checkers used by hooks and `make check`

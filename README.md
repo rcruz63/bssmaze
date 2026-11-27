@@ -36,35 +36,38 @@ Hooks are backed by real scripts with tests: [`scripts/`](scripts/).
 ## Architecture
 ```mermaid
 flowchart LR
-  Client[Telnet / Web client] --> Server[server]
-  Server --> Narrator[narrator: LLM or offline]
+  Client[Web terminal / local Telnet] --> Server[server: Lambda or Telnet]
+  Server --> Narrator[narrator: Bedrock, Gemini or offline]
   Server --> Engine[engine: rules + state]
-  Server --> Render[render: 80 cols, ANSI, baud]
+  Server --> Render[render: 80 cols, ANSI]
+  Server --> Store[(StateStore: DynamoDB)]
   Narrator -->|ProposedAction| Engine
   Stories[stories: YAML] --> Engine
 ```
-Telnet and the web terminal share one render pipeline and one session facade, so both send the same bytes.
+The local Telnet adapter and the Lambda HTTP handler share one render pipeline and one session facade, so both send the same bytes. Deployment diagram: [design-aws.md](.kiro/specs/telnet-tales/design-aws.md).
 Details: [design.md](.kiro/specs/telnet-tales/design.md). Spanish docs and ADRs are in [`docs/`](docs/).
 
 ## Quickstart
 ```bash
 uv sync
 make check          # ruff, mypy --strict, pytest + hypothesis, repo rules
-cp .env.example .env   # optional: add GEMINI_API_KEY; works offline without it
+cp .env.example .env   # optional: LLM_PROVIDER and model ids; works offline without it
 ```
 Planned: `uv run telnet-tales` then `telnet localhost 2323` (or `nc localhost 2323`),
-and a web terminal at `http://localhost:8080`.
+and the web client against a local HTTP handler. Deploy: `sam build && sam deploy`
+(see [`docs/despliegue-aws.md`](docs/despliegue-aws.md); `make package` arrives with task 14.3).
 
 ## Demo and LLM
-Default LLM: Gemini (optional Vertex AI), with call caps and an offline fallback.
-The public demo is the web terminal only, behind a login (credentials in the
-Devpost testing instructions), on Google Cloud Run. Real Telnet runs locally and
-in the video. AWS is the documented alternative. See ADRs 0006 and 0007.
-The model id is read only from `GEMINI_MODEL`; list the ids your key can use with
+LLM chain: Amazon Bedrock first, Gemini as fallback, then a deterministic offline
+narrator, with per-session and daily call caps (ADR 0006). Model ids are read only
+from `BEDROCK_MODEL_ID` and `GEMINI_MODEL`; list the ids your account or key can use with
 `uv run python -m telnet_tales.narrator.list_models`.
-Saves: local files by default. On Cloud Run the disk is ephemeral and the instance
-scales to zero after about 15 minutes idle, so without `GCS_SAVE_BUCKET` a carrier-drop
-resume works only while the instance is warm. See ADR 0009.
+The public demo is the web terminal only, behind a login (credentials in the Devpost
+testing instructions). It runs serverless on AWS: S3 + CloudFront, API Gateway HTTP API,
+Lambda and DynamoDB, described by one SAM template (ADR 0010). Kiro is an AWS product
+and we have AWS credits; the hackathon gives no bonus for AWS. Real Telnet runs locally
+and in the video, not in the cloud. Saves live in DynamoDB with a TTL, so a carrier-drop
+resume works the next day (ADR 0009). Cloud Run and Lightsail are documented alternatives.
 
 ## Rules in one glance
 - The LLM never mutates state; every action is validated by the engine.

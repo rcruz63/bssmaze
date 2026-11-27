@@ -75,7 +75,8 @@ Se usa en tests, sin clave de API y como respaldo de la demo.
 ## 8. Caída de portadora (función estrella)
 1. Al inicio de cada ronda de combate el motor tira contra `drop_chance` (8 % por defecto).
 2. Si cae: se guarda el estado, se muestran mensajes en ficción
-   (`+++ATH0`, `NO CARRIER`) y se cierra la conexión.
+   (`+++ATH0`, `NO CARRIER`) y se cierra la conexión (en la web, la respuesta trae
+   `carrier_dropped` y el cliente se desconecta).
 3. Al reconectar con el mismo handle, se carga el guardado y se retoma la misma ronda.
 4. La decisión usa la RNG del motor, por lo que los tests pueden forzarla.
 Motivo: da identidad al juego y demuestra que el estado vive en el motor, no en la conexión.
@@ -104,9 +105,9 @@ Catálogos `en` y `es-ES` solo para textos de interfaz (menús, errores, ayuda).
 falta una clave en `es-ES` se usa `en`. Un test exige que ambos tengan las mismas claves.
 
 ## 13. Proveedor de LLM
-Interfaz `NarratorProvider` en `narrator/`. Por defecto, Gemini (biblioteca
-`google-genai`; opcionalmente Vertex AI con créditos de GCP). La clave va en
-`GEMINI_API_KEY`, nunca en el repositorio. Ver ADR 0006.
+Interfaz `NarratorProvider` en `narrator/`. Cadena: Amazon Bedrock (principal), Gemini
+(respaldo) y narrador offline. Los ids de modelo van en `BEDROCK_MODEL_ID` y `GEMINI_MODEL`,
+nunca en el código. Ver ADR 0006.
 
 El script `scripts/validate_story_graph.py` hace una versión ligera de estas
 comprobaciones sobre `stories/` (destinos, callejones sin salida, líneas de más de

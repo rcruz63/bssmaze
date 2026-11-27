@@ -3,13 +3,13 @@
 ## Módulos
 ```mermaid
 flowchart LR
-  Client[Cliente Telnet / Web] --> Server[server]
+  Client[Terminal web / Telnet local] --> Server[server]
   Server --> Narrator[narrator]
   Server --> Engine[engine]
   Server --> Render[render]
+  Server --> Store[(StateStore)]
   Narrator -->|ProposedAction| Engine
   Stories[stories] --> Engine
-  Render --> Throttle[limitador de baudios] --> Server
 ```
 
 ## Responsabilidades
@@ -18,15 +18,17 @@ flowchart LR
 | `engine` | Estado, dados, reglas, combate, decisión de caída | I/O, reloj, LLM |
 | `narrator` | Interfaz del proveedor, prompts, parseo, narrador offline | Modificar el estado |
 | `stories` | Carga YAML y validación del grafo | Lógica de juego |
-| `server` | Telnet, WebSocket, sesiones, guardados | Reglas |
+| `server` | Fachada de sesión, manejador Lambda, Telnet local, almacenes de estado | Reglas |
 | `render` | 80 columnas, ANSI, cajas, i18n, limitador | Reglas |
 
 `render` es un paquete propio porque ajuste de línea, color y ritmo de baudios son
-funciones puras y comprobables, compartidas por Telnet y web.
+funciones puras y comprobables, compartidas por Telnet y web. El navegador repite
+el ritmo de baudios en JS sin cambiar los bytes.
 
 ## Flujo de un turno
 texto del jugador -> `narrator.interpret` -> `engine.apply_action` (valida y aplica)
--> eventos -> `narrator.narrate` -> `render` (ajuste + color) -> limitador -> socket.
+-> eventos -> `narrator.narrate` -> `render` (ajuste + color) -> respuesta HTTP (la web
+pinta con ritmo de baudios) o, en Telnet local, limitador -> socket.
 
 ## Reglas de dependencia
 `server` puede importar a todos. `narrator` importa tipos de `engine`, nunca
@@ -52,6 +54,8 @@ Ver `.kiro/steering/code-style.md`: archivos de menos de 200 líneas, funciones 
 | `devlog-reminder` | después de una tarea | recordatorio al agente: entrada en `DEVLOG.md` |
 
 ## Demo pública
-Solo terminal web con usuario y contraseña, en Google Cloud Run (ADR 0007). El
-proveedor LLM por defecto es Gemini (ADR 0006), con topes de llamadas por sesión y por
-día; al llegar al tope se usa el narrador offline.
+Solo terminal web con usuario y contraseña, serverless en AWS (ADR 0010): S3 y CloudFront
+sirven la página; `POST /api/command` va a un API Gateway HTTP API y a una Lambda sin estado;
+DynamoDB guarda partidas, el contador diario de llamadas y los intentos de login (ADR 0009).
+El LLM sigue la cadena Bedrock, Gemini, offline (ADR 0006), con topes por sesión y por día.
+Guía de despliegue: `docs/despliegue-aws.md`.
