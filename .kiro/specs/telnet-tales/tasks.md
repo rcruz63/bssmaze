@@ -53,13 +53,13 @@ Dec is buffer for submission (deadline 4 Dec).
   - [x] S1.4 Note cold start time and any blocker in DEVLOG; if blocked, plan the Lightsail fallback (ADR 0010)
   - [x] DEVLOG entry added
   - Verify: `curl` the CloudFront `/api/command` URL returns the hello-world JSON
-- [ ] 6. Renderer
-  - [ ] 6.1 `render/wrap.py`: ANSI-aware visible width and word wrap (R6.1) - P9
-  - [ ] 6.2 `render/theme.py`: green/amber role-to-color mapping (R6.2)
-  - [ ] 6.3 `render/boxes.py`: UTF-8, CP437, ASCII boxes (R6.3)
-  - [ ] 6.5 `render/pipeline.py`: the only view-model -> bytes function (wrap, color, boxes, CRLF) (R6.5) - P14 base
-  - [ ] 6.4 `render/i18n.py` + `en.yaml`/`es-ES.yaml` catalogs (R11) - P13
-  - [ ] DEVLOG entry added
+- [x] 6. Renderer
+  - [x] 6.1 `render/wrap.py`: ANSI-aware visible width and word wrap (R6.1) - P9
+  - [x] 6.2 `render/theme.py`: green/amber role-to-color mapping (R6.2)
+  - [x] 6.3 `render/boxes.py`: UTF-8, CP437, ASCII boxes (R6.3)
+  - [x] 6.5 `render/pipeline.py`: the only view-model -> bytes function (wrap, color, boxes, CRLF) (R6.5) - P14 base
+  - [x] 6.4 `render/i18n.py` + `en.yaml`/`es-ES.yaml` catalogs (R11) - P13
+  - [x] DEVLOG entry added
   - Verify: `make check`
 - [ ] HUMAN GATE G1: STOP. Do not start any task below until the user confirms in chat. Playtest feel: first playable turn.
 - [ ] 7. Session facade, auth and HTTP schema (transport-neutral)

@@ -71,6 +71,11 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Renderer pipeline (task 6)
+**What happened:** a Kiro Crew worker added render/wrap.py (ANSI-aware width and wrap), theme.py (green and amber, 16 colors), boxes.py (UTF-8, CP437, ASCII), pipeline.py (the one view model to bytes function, CRLF, strips escape codes from story text) and i18n.py with en and es-ES catalogs. Hypothesis found no failure (P9, P13, P14 base pass). A unit test did catch one bug: a box title of 1 column came out empty; clip() was rewritten.
+**Why it matters:** all game text can only leave through one function, so Telnet and web will match.
+**What we learned:** never trust story or LLM text near a terminal: escape codes are removed before coloring.
+
 ### 2026-11-27 - [crew] Offline narrator and parser (task 5)
 **What happened:** a Kiro Crew worker added narrator/provider.py (NarratorProvider, bounded NarrationContext), context.py, parser.py (keyword commands, 200-char cap) and offline.py (templates). Unknown or injection-style text becomes a help action. No hypothesis failure found (P8 passes).
 **Why it matters:** the game can be narrated and commanded with no key, no network and no randomness.
