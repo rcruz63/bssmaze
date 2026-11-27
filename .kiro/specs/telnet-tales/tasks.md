@@ -61,6 +61,7 @@ Dec is buffer for submission (deadline 4 Dec).
   - [ ] 6.4 `render/i18n.py` + `en.yaml`/`es-ES.yaml` catalogs (R11) - P13
   - [ ] DEVLOG entry added
   - Verify: `make check`
+- [ ] HUMAN GATE G1: STOP. Do not start any task below until the user confirms in chat. Playtest feel: first playable turn.
 - [ ] 7. Session facade, auth and HTTP schema (transport-neutral)
   - [ ] 7.1 `server/session.py`: facade `handle_command(store, request) -> response`, stateless per command: login, handle, bulletins, menu, turn (R8.1, R7.9)
   - [ ] 7.2 Call time limit counted in the token and `NO CARRIER` (R8.2, R8.3)
@@ -83,6 +84,7 @@ Dec is buffer for submission (deadline 4 Dec).
 
 ## Day 3 - Sun 29 Nov: combat, state stores, LLM chain, carrier drop
 Decision point: if the serverless smoke deploy (S1) still fails today, switch to the Lightsail fallback (ADR 0010).
+- [ ] HUMAN GATE G2: STOP. Do not start combat until the user confirms in chat. Combat balance.
 - [ ] 10. Combat
   - [ ] 10.1 `engine/combat.py`: rounds, attack, flee (R3) - P4
   - [ ] 10.2 Story encounters wired to combat state
@@ -124,17 +126,20 @@ Decision point: if the serverless smoke deploy (S1) still fails today, switch to
   - [ ] 14.7 `tests/server/test_transport_parity.py`: same seed and script through the Telnet adapter and the Lambda handler, equal bytes, plus a golden file (R7.6) - P14
   - [ ] 14.8 Check the CRT CSS/JS and baud pacing never alter bytes: no text transform in `static/` (R7.7)
   - [ ] 14.9 `docs/despliegue-aws.md` (Spanish): `sam build`, `sam deploy`, credentials as a user action, region, Bedrock access; README demo URL (R13.8)
+  - [ ] HUMAN GATE G4: STOP. No AWS deploy beyond the smoke stack, publishing commits to a remote, secret or API key use, or spending until the user confirms in chat.
   - [ ] 14.10 `sam deploy` to the real account; verify `BEDROCK_MODEL_ID` with `list_models`; credentials into the Devpost testing-instructions field (not in the repo)
   - [ ] DEVLOG entry added
   - Verify: `make check`; open the CloudFront URL in a browser
 
 ## Day 5 - Tue 1 Dec: polish, demo, submission prep
+- [ ] HUMAN GATE G3: STOP. No story or tone rewrite beyond the draft until the user confirms in chat.
 - [ ] 15. Polish
   - [ ] 15.1 SysOp bulletins, ANSI title screen, ASCII maze map art
   - [ ] 15.2 Playtest full story on 2400 baud; fix pacing
   - [ ] DEVLOG entry added
 - [ ] 16. Submission assets
   - [ ] 16.1 README: screenshots, demo URL, Kiro usage section (R12.4)
+  - [ ] HUMAN GATE G5: STOP. No final demo video or submission until the user confirms in chat.
   - [ ] 16.2 Demo video script and recording (< 3 min)
   - [ ] 16.3 Blog post and social post draft (#KiroweenHackathon26)
   - [ ] 16.4 Walk `#submission-checklist` steering file (demo credentials in Devpost, Telnet shown in video)
