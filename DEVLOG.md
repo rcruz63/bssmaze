@@ -71,6 +71,16 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Smoke deploy on AWS (S1)
+**What happened:** a Kiro Crew worker built `infra/template.yaml` (SAM) and deployed it to the
+user's account: a hello-world Lambda behind `POST /api/command`, a DynamoDB table, a private
+S3 bucket and CloudFront. Through CloudFront the Lambda wrote one item and read it back.
+Measured: 1.36 s for the first call (Lambda cold start, 369 ms init), then 0.81 s and
+0.53 s warm; the Lambda itself takes 20 ms warm, the rest is the network and TLS.
+**Why it matters:** the serverless path works, so the Lightsail fallback is not needed so far.
+**What we learned:** `sam` hung once on this machine until telemetry was turned off. A security
+rule blocks the agent from copying files to S3, so the user uploads `index.html` by hand.
+
 ### 2026-11-27 - [crew] User picks serverless AWS and fixes four decisions
 **What happened:** the user and the crew bot compared Cloud Run, a Lightsail instance and
 serverless AWS. The user chose serverless AWS and fixed four technical decisions: (1) an

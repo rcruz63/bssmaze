@@ -1,0 +1,20 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "telnet-tales-smoke"
+
+[default.build.parameters]
+template_file = "template.yaml"
+
+[default.deploy.parameters]
+template_file = "template.yaml"
+region = "us-east-1"
+profile = "casa"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+
+[default.validate.parameters]
+region = "us-east-1"
+profile = "casa"
+lint = true

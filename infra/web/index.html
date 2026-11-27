@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Telnet Tales - smoke</title>
+<style>
+  body { background: #000; color: #33ff33; font-family: monospace; padding: 1em; }
+  pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<pre id="out">CONNECT 2400
+Dialing the SysOp...</pre>
+<script>
+// Marcador de la terminal CRT: solo prueba el camino navegador -> /api/command.
+fetch("/api/command", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: "{}",
+})
+  .then((r) => r.text())
+  .then((t) => { document.getElementById("out").textContent += "\n" + t; })
+  .catch((e) => { document.getElementById("out").textContent += "\nNO CARRIER " + e; });
+</script>
+</body>
+</html>

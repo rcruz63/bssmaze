@@ -22,8 +22,39 @@ El resultado incluye la URL de CloudFront. La plantilla es `infra/template.yaml`
 (Lambda, HTTP API, DynamoDB, S3, CloudFront y alerta de AWS Budgets).
 
 ## Despliegue de humo (sáb 28 nov)
-Una Lambda "hola mundo" detrás de `POST /api/command`, con tabla y CloudFront. Sirve para
-descubrir pronto los problemas de permisos, región y arranque en frío.
+Hecho el 27 nov (tarea S1). Pila `telnet-tales-smoke`, región `us-east-1`, perfil `casa`.
+Recursos: Lambda python3.12 arm64 (`infra/smoke/handler.py`), HTTP API `POST /api/command`,
+tabla DynamoDB (TTL `ttl`), bucket S3 privado y CloudFront con OAC y ruta `/api/*` sin
+caché. IAM mínimo: solo `PutItem` y `GetItem` sobre la tabla; el permiso de Bedrock está
+comentado en la plantilla.
+
+- CloudFront: https://d2q60lhdk0h8ue.cloudfront.net
+- API: https://62elw6oupa.execute-api.us-east-1.amazonaws.com
+- Tabla: `telnet-tales-smoke-Table-R2P3D386VRYJ`
+- Bucket: `telnet-tales-smoke-sitebucket-98dtgflapfi5`
+
+Redespliegue, desde la raíz del repo:
+```bash
+export SAM_CLI_TELEMETRY=0   # sin esto sam se quedó colgado en esta máquina
+make smoke-deploy            # sam build + sam deploy con infra/samconfig.toml
+```
+Subir la página es un paso manual del usuario (el agente tiene bloqueada la copia a S3):
+```bash
+aws s3 cp infra/web/index.html s3://telnet-tales-smoke-sitebucket-98dtgflapfi5/index.html --content-type text/html --profile casa --region us-east-1
+```
+Prueba de la API:
+```bash
+curl -s -X POST https://d2q60lhdk0h8ue.cloudfront.net/api/command -H 'content-type: application/json' -d '{}'
+```
+Medido con curl (tiempo total): 1.36 s en frío, 0.81 s y 0.53 s en caliente. En la Lambda:
+`Init Duration` 369 ms, 155 ms la primera llamada y 20 ms las siguientes.
+
+Borrar todo (solo lo ejecuta el usuario; primero hay que vaciar el bucket):
+```bash
+aws s3 rm s3://telnet-tales-smoke-sitebucket-98dtgflapfi5 --recursive --profile casa --region us-east-1
+sam delete --stack-name telnet-tales-smoke --profile casa --region us-east-1
+```
+Pendiente del usuario: la alerta de AWS Budgets necesita su correo.
 
 ## Respaldo
 Si el despliegue serverless no funciona el dom 29 nov, se usa una instancia Lightsail con el

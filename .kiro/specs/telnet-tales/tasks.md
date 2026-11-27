@@ -47,11 +47,11 @@ Dec is buffer for submission (deadline 4 Dec).
 
 ## Day 2 - Sat 28 Nov: smoke deploy, renderer, session facade
 - [ ] S1. Smoke deploy (do this first; ADR 0010 fallback decision depends on it)
-  - [ ] S1.1 User: `aws configure sso` (or a profile) in their own terminal, pick the region, enable Bedrock model access (never in the repo)
-  - [ ] S1.2 `infra/template.yaml` minimal: hello-world Lambda + HTTP API `POST /api/command` + DynamoDB table + S3 + CloudFront with `/api/*` routing (R7.2, R13.8)
+  - [x] S1.1 User: `aws configure sso` (or a profile) in their own terminal, pick the region, enable Bedrock model access (never in the repo)
+  - [x] S1.2 `infra/template.yaml` minimal: hello-world Lambda + HTTP API `POST /api/command` + DynamoDB table + S3 + CloudFront with `/api/*` routing (R7.2, R13.8)
   - [ ] S1.3 `sam build && sam deploy --guided`; open the CloudFront URL, call `/api/command`, write and read one DynamoDB item
-  - [ ] S1.4 Note cold start time and any blocker in DEVLOG; if blocked, plan the Lightsail fallback (ADR 0010)
-  - [ ] DEVLOG entry added
+  - [x] S1.4 Note cold start time and any blocker in DEVLOG; if blocked, plan the Lightsail fallback (ADR 0010)
+  - [x] DEVLOG entry added
   - Verify: `curl` the CloudFront `/api/command` URL returns the hello-world JSON
 - [ ] 6. Renderer
   - [ ] 6.1 `render/wrap.py`: ANSI-aware visible width and word wrap (R6.1) - P9

@@ -19,3 +19,4 @@ htmlcov/
 saves/
 *.log
 .DS_Store
+.aws-sam/
