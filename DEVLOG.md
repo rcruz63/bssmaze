@@ -71,6 +71,11 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Actions and rules (task 2)
+**What happened:** a Kiro Crew worker added ProposedAction with a closed allow-list, typed rejections, and pure rules for move, look, take and inventory. Story data models (Exit, Requirement, Encounter, StoryNode, Story) live in engine/story_models.py so rules do not import stories. No hypothesis failure found (P2, P3, P4, P5, P7 pass).
+**Why it matters:** rejected actions provably leave the state equal, and unknown action types never apply.
+**What we learned:** the story models belong to engine because dependencies point from stories to engine; stories/schema.py will re-export them.
+
 ### 2026-11-27 - [crew] Smoke deploy on AWS (S1)
 **What happened:** a Kiro Crew worker built `infra/template.yaml` (SAM) and deployed it to the
 user's account: a hello-world Lambda behind `POST /api/command`, a DynamoDB table, a private

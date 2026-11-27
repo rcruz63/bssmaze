@@ -23,10 +23,10 @@ Dec is buffer for submission (deadline 4 Dec).
   - [x] 1.2 `engine/dice.py`: seeded RNG, `roll_d20`, `check` (R1.2, R1.3) - P1, P2
   - [x] DEVLOG entry added
   - Verify: `uv run pytest tests/engine && make check`
-- [ ] 2. Actions and rules
-  - [ ] 2.1 `engine/actions.py`: ProposedAction, allow-list, Rejection (R5.1, R5.2) - P7
-  - [ ] 2.2 `engine/rules.py`: move, look, take, inventory with validation (R1.5) - P3, P4, P5
-  - [ ] DEVLOG entry added
+- [x] 2. Actions and rules
+  - [x] 2.1 `engine/actions.py`: ProposedAction, allow-list, Rejection (R5.1, R5.2) - P7
+  - [x] 2.2 `engine/rules.py`: move, look, take, inventory with validation (R1.5) - P3, P4, P5
+  - [x] DEVLOG entry added
   - Verify: `make check`
 - [ ] 3. Story loader and validator
   - [ ] 3.1 `stories/schema.py`: StoryNode, Exit, Requirement, Encounter (R2.1)
