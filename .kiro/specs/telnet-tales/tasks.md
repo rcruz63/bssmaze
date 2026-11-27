@@ -39,10 +39,10 @@ Dec is buffer for submission (deadline 4 Dec).
   - [x] 4.2 Test: the shipped story validates and is winnable
   - [x] DEVLOG entry added
   - Verify: `make check`
-- [ ] 5. Offline narrator and command parser
-  - [ ] 5.1 `narrator/provider.py`: Protocol, NarrationContext (R4.1, R4.2)
-  - [ ] 5.2 `narrator/offline.py`: template narration + keyword parser (R4.5) - P8
-  - [ ] DEVLOG entry added
+- [x] 5. Offline narrator and command parser
+  - [x] 5.1 `narrator/provider.py`: Protocol, NarrationContext (R4.1, R4.2)
+  - [x] 5.2 `narrator/offline.py`: template narration + keyword parser (R4.5) - P8
+  - [x] DEVLOG entry added
   - Verify: `make check`
 
 ## Day 2 - Sat 28 Nov: smoke deploy, renderer, session facade
