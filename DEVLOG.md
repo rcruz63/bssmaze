@@ -71,6 +71,12 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Hypothesis counterexample in the wrapper (P9)
+**What happened:** a repeat run of the P9 width property failed with the shrunk example text `"00\u00ad"` (a soft hyphen) at width 2: three characters, but `visible_width` counted 2. The soft hyphen has zero width in Unicode but many terminals draw it as one column. Fix: `render/wrap.py` now drops control and format characters, and the example is pinned with `@example`.
+**Why it matters:** the width rule (80 columns) must hold on real terminals, not only in our own count.
+A second shrunk example, `"00\u094d"` (a combining mark), failed the same test, but this time the test was wrong: its extra check counted code points, not columns. The test now allows combining marks; both examples are pinned.
+**What we learned:** run a property test more than once before trusting a green run; the first green was luck.
+
 ### 2026-11-27 - [crew] Renderer pipeline (task 6)
 **What happened:** a Kiro Crew worker added render/wrap.py (ANSI-aware width and wrap), theme.py (green and amber, 16 colors), boxes.py (UTF-8, CP437, ASCII), pipeline.py (the one view model to bytes function, CRLF, strips escape codes from story text) and i18n.py with en and es-ES catalogs. Hypothesis found no failure (P9, P13, P14 base pass). A unit test did catch one bug: a box title of 1 column came out empty; clip() was rewritten.
 **Why it matters:** all game text can only leave through one function, so Telnet and web will match.

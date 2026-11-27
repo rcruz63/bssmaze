@@ -9,7 +9,8 @@ DEFAULT_COLUMNS = 80  # Ancho clásico de terminal; ninguna línea de salida lo 
 MIN_COLUMNS = 2  # Un carácter ancho ocupa dos columnas: con menos no cabría ni uno.
 ANSI_SEQUENCE = re.compile(r"\x1b\[[0-9;]*m")
 TOKEN = re.compile(r"\x1b\[[0-9;]*m|.", re.DOTALL)
-ZERO_WIDTH_CATEGORIES = frozenset({"Mn", "Me", "Cf"})
+ZERO_WIDTH_CATEGORIES = frozenset({"Mn", "Me"})
+DROPPED_CATEGORIES = frozenset({"Cc", "Cf"})  # Control y formato: su ancho depende del terminal.
 
 
 def strip_ansi(text: str) -> str:
@@ -23,7 +24,7 @@ def strip_escapes(text: str) -> str:
 
 
 def char_width(char: str) -> int:
-    if unicodedata.category(char) in ZERO_WIDTH_CATEGORIES | {"Cc"}:
+    if unicodedata.category(char) in ZERO_WIDTH_CATEGORIES | DROPPED_CATEGORIES:
         return 0
     return 2 if unicodedata.east_asian_width(char) in "WF" else 1
 
@@ -37,10 +38,10 @@ def visible_width(text: str) -> int:
 
 
 def clean_char(token: str) -> str:
-    """Tabuladores a espacio; el resto de caracteres de control se descarta."""
+    """Tabuladores a espacio; se descartan control y formato (guion blando, bidi, anchura cero)."""
     if token == "\t":
         return " "
-    return "" if unicodedata.category(token) == "Cc" else token
+    return "" if unicodedata.category(token) in DROPPED_CATEGORIES else token
 
 
 def attach(units: list[str], token: str) -> list[str]:

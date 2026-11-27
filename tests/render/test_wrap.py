@@ -1,6 +1,7 @@
 """Pruebas de ajuste de línea: P9 (ancho)."""
 
 import re
+import unicodedata
 
 import pytest
 from hypothesis import example, given, settings
@@ -56,15 +57,22 @@ def test_tiny_width_is_refused_and_clip_works() -> None:
 text_strategy = st.text(max_size=400)
 
 
+def has_marks(line: str) -> bool:
+    return any(unicodedata.combining(char) for char in line)
+
+
 @settings(max_examples=100, deadline=None)
 @given(text_strategy, st.integers(min_value=2, max_value=80))
+@example("00\u094d", 2)  # contraejemplo: marca combinante, fallo del propio test
+@example("00\xad", 2)  # contraejemplo de hypothesis: el guion blando (U+00AD)
 @example("漢" * 100, 3)
 @example("\x1b[31m" + "z" * 200, 80)
 def test_p9_every_wrapped_line_fits(text: str, width: int) -> None:
     # P9: para cualquier texto y ancho, ninguna línea supera el ancho visible.
     for line in wrap_text(text, width):
         assert visible_width(line) <= width
-        assert len(ANSI.sub("", line)) <= width
+        # Sin marcas combinantes, cada carácter visible ocupa al menos una columna.
+        assert len(ANSI.sub("", unicodedata.normalize("NFC", line))) <= width or has_marks(line)
 
 
 def test_clip_respects_wide_characters_and_zero() -> None:
