@@ -71,6 +71,11 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Story loader and validator (task 3)
+**What happened:** a Kiro Crew worker added stories/schema.py (StoryFile, status draft or final), loader.py (YAML load, all errors listed together) and graph.py (unknown ids, dead ends, unreachable nodes, nodes that cannot reach an ending, items required but nowhere to be found, item-aware winnability). Same vocabulary as scripts/validate_story_graph.py. No hypothesis failure found (P6 passes).
+**Why it matters:** a bad story is refused with every error at once, before a player meets it.
+**What we learned:** the nested-loop rule pushed the graph code into small helpers (exit_pairs, edge_pairs); it also made the code easier to read.
+
 ### 2026-11-27 - [crew] Actions and rules (task 2)
 **What happened:** a Kiro Crew worker added ProposedAction with a closed allow-list, typed rejections, and pure rules for move, look, take and inventory. Story data models (Exit, Requirement, Encounter, StoryNode, Story) live in engine/story_models.py so rules do not import stories. No hypothesis failure found (P2, P3, P4, P5, P7 pass).
 **Why it matters:** rejected actions provably leave the state equal, and unknown action types never apply.

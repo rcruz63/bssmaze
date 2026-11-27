@@ -28,11 +28,11 @@ Dec is buffer for submission (deadline 4 Dec).
   - [x] 2.2 `engine/rules.py`: move, look, take, inventory with validation (R1.5) - P3, P4, P5
   - [x] DEVLOG entry added
   - Verify: `make check`
-- [ ] 3. Story loader and validator
-  - [ ] 3.1 `stories/schema.py`: StoryNode, Exit, Requirement, Encounter (R2.1)
-  - [ ] 3.2 `stories/loader.py`: YAML load, aggregated errors (R2.3)
-  - [ ] 3.3 `stories/graph.py`: reachability, dead ends, unknown refs (R2.2) - P6
-  - [ ] DEVLOG entry added
+- [x] 3. Story loader and validator
+  - [x] 3.1 `stories/schema.py`: StoryNode, Exit, Requirement, Encounter (R2.1)
+  - [x] 3.2 `stories/loader.py`: YAML load, aggregated errors (R2.3)
+  - [x] 3.3 `stories/graph.py`: reachability, dead ends, unknown refs (R2.2) - P6
+  - [x] DEVLOG entry added
   - Verify: `make check`
 - [ ] 4. "The Haunted Maze" story data
   - [ ] 4.1 `stories/haunted_maze.yaml` with 12-15 nodes, 2 encounters, 1 key item (R2.4)

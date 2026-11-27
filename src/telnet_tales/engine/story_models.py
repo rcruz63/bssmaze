@@ -47,6 +47,8 @@ class StoryNode(FrozenModel):
     items: tuple[str, ...] = ()
     encounter: str | None = None
     is_ending: bool = False
+    # Solo los finales distinguen victoria de derrota; así se comprueba que la historia es ganable.
+    outcome: Literal["victory", "defeat"] | None = None
 
 
 class Story(FrozenModel):
