@@ -71,6 +71,11 @@ Brief, no secrets, no raw chat dumps. Rules: [`devlog.md`](.kiro/steering/devlog
 ## Log
 Newest first.
 
+### 2026-11-27 - [crew] Draft of The Haunted Maze (task 4)
+**What happened:** a Kiro Crew worker wrote stories/haunted_maze.yaml: 13 nodes, 2 encounters (skeleton, SysOp's ghost), one key item (iron_key), one victory ending and one defeat ending. It is marked status: draft. It passes scripts/validate_story_graph.py and the runtime validator, and the engine walks the winning path. The old sample story was removed.
+**Why it matters:** the story is data, so the loader and validators check it on every make check.
+**What we learned:** tone and difficulty were NOT tuned: a human must review the text and the balance (gate G3 blocks any rewrite).
+
 ### 2026-11-27 - [crew] Story loader and validator (task 3)
 **What happened:** a Kiro Crew worker added stories/schema.py (StoryFile, status draft or final), loader.py (YAML load, all errors listed together) and graph.py (unknown ids, dead ends, unreachable nodes, nodes that cannot reach an ending, items required but nowhere to be found, item-aware winnability). Same vocabulary as scripts/validate_story_graph.py. No hypothesis failure found (P6 passes).
 **Why it matters:** a bad story is refused with every error at once, before a player meets it.

@@ -34,10 +34,10 @@ Dec is buffer for submission (deadline 4 Dec).
   - [x] 3.3 `stories/graph.py`: reachability, dead ends, unknown refs (R2.2) - P6
   - [x] DEVLOG entry added
   - Verify: `make check`
-- [ ] 4. "The Haunted Maze" story data
-  - [ ] 4.1 `stories/haunted_maze.yaml` with 12-15 nodes, 2 encounters, 1 key item (R2.4)
-  - [ ] 4.2 Test: the shipped story validates and is winnable
-  - [ ] DEVLOG entry added
+- [x] 4. "The Haunted Maze" story data
+  - [x] 4.1 `stories/haunted_maze.yaml` with 12-15 nodes, 2 encounters, 1 key item (R2.4)
+  - [x] 4.2 Test: the shipped story validates and is winnable
+  - [x] DEVLOG entry added
   - Verify: `make check`
 - [ ] 5. Offline narrator and command parser
   - [ ] 5.1 `narrator/provider.py`: Protocol, NarrationContext (R4.1, R4.2)

@@ -1,0 +1,162 @@
+# draft: tone and difficulty need human review
+# Borrador de "The Haunted Maze": válido, ganable y coherente; sin pulir tono ni equilibrio.
+status: draft
+start: gate
+encounters:
+  - id: skeleton
+    name: Rattling Skeleton
+    hit_points: 6
+    attack_bonus: 1
+    damage: 2
+    flavor_hint: bones that click like a modem dialing
+  - id: sysop_ghost
+    name: The SysOp's Ghost
+    hit_points: 10
+    attack_bonus: 3
+    damage: 3
+    flavor_hint: a green phosphor face that keeps forgetting your name
+nodes:
+  - id: gate
+    title: The Rusty Gate
+    text: |
+      +----------------------------------------------+
+      |  *** THE HAUNTED MAZE ***   door game v0.9   |
+      |  SysOp: ghost    Callers today: 0            |
+      +----------------------------------------------+
+      A rusted gate hums with static. Beyond it, a hall waits in the dark.
+    exits:
+      - {label: north, target_id: hall}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: hall
+    title: The Dark Hall
+    text: |
+      Cold air smells of old modems. A lantern hangs on a hook by the door.
+      A stair goes down into the black. A passage leads east.
+    exits:
+      - {label: south, target_id: gate}
+      - {label: east, target_id: maze_a}
+      - label: down
+        target_id: cellar
+        requirement: {item: lantern}
+    items: [lantern]
+    encounter: null
+    is_ending: false
+  - id: maze_a
+    title: Maze, First Fork
+    text: |
+      Hedges of tangled cable close in. The path splits north and east.
+    exits:
+      - {label: west, target_id: hall}
+      - {label: north, target_id: maze_b}
+      - {label: east, target_id: maze_c}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: maze_b
+    title: Maze, Whispering Bend
+    text: |
+      A hiss of line noise follows you. The way goes on north.
+    exits:
+      - {label: south, target_id: maze_a}
+      - {label: north, target_id: maze_d}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: maze_c
+    title: Maze, Flickering Alley
+    text: |
+      Screens flicker on the walls. East, the light turns a sick white.
+    exits:
+      - {label: west, target_id: maze_a}
+      - {label: east, target_id: maze_e}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: maze_d
+    title: Maze, The Riddle Hatch
+    text: |
+      A hatch in the floor asks: "What has keys but opens no door?"
+      A quick mind may answer it.
+    exits:
+      - {label: south, target_id: maze_b}
+      - label: hatch
+        target_id: cellar
+        requirement: {stat: wits, minimum: 2}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: maze_e
+    title: Maze, The White Static
+    text: |
+      The corridor ends in a wall of snow. Something wants you to step in.
+    exits:
+      - {label: west, target_id: maze_c}
+      - {label: static, target_id: trapped}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: cellar
+    title: The Damp Cellar
+    text: |
+      Your lantern shows barrels of dead batteries. A bone-lined arch opens east.
+    exits:
+      - {label: up, target_id: hall}
+      - {label: east, target_id: ossuary}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: ossuary
+    title: The Ossuary
+    text: |
+      Skulls are stacked to the ceiling. An iron key glints in a rib cage.
+    exits:
+      - {label: west, target_id: cellar}
+      - {label: north, target_id: crypt_door}
+    items: [iron_key]
+    encounter: skeleton
+    is_ending: false
+  - id: crypt_door
+    title: The Sealed Crypt
+    text: |
+      A rusty door hums with static. The lock is shaped like an iron key.
+    exits:
+      - {label: south, target_id: ossuary}
+      - label: north
+        target_id: crypt
+        requirement: {item: iron_key}
+    items: []
+    encounter: null
+    is_ending: false
+  - id: crypt
+    title: The SysOp's Crypt
+    text: |
+      A terminal glows in the dark. The SysOp's ghost looks up from the screen.
+      Behind it, a door marked EXIT shows a sliver of daylight.
+    exits:
+      - {label: south, target_id: crypt_door}
+      - {label: exit, target_id: escape}
+    items: []
+    encounter: sysop_ghost
+    is_ending: false
+  - id: escape
+    title: Daylight
+    text: |
+      You slip through the door and the line goes quiet.
+      NO CARRIER. You are free... for now.
+    exits: []
+    items: []
+    encounter: null
+    is_ending: true
+    outcome: victory
+  - id: trapped
+    title: Lost in the Static
+    text: |
+      The snow swallows you. The maze keeps one more handle in its list.
+      NO CARRIER.
+    exits: []
+    items: []
+    encounter: null
+    is_ending: true
+    outcome: defeat
